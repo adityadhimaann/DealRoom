@@ -1,0 +1,24 @@
+REQUEST FOR PROPOSAL (RFP) — ENTERPRISE CLOUD & AI SECURITY PLATFORM
+
+Client: Apex Global Logistics Inc.
+Engagement Type: 6-Month Fixed Retainer with Milestone Escrow
+Target Budget: $28,000 - $35,000 Total ($4,500 - $5,800 / month)
+Vendor Asking Rate Benchmark: $45,000 Total ($7,500 / month)
+
+1. SCOPE OF WORK & TECHNICAL DELIVERABLES:
+- Kubernetes Multi-Region Cluster Architecture & Zero-Downtime Migration
+- Real-Time LLM Guardrails, Prompt-Injection Defense, and PII Masking Pipeline
+- PostgreSQL High-Availability Database Replication with Point-in-Time Recovery
+- Automated CI/CD Deployment with GitHub Actions and Terraform Infrastructure-as-Code
+- 99.95% System Uptime SLA with Sub-15 Minute Critical Incident Triage (24/7 Support)
+
+2. COMMERCIAL TERMS & PAYMENT MILESTONES:
+- Milestone 1 (Month 1): 25% payment on Infrastructure Terraform Provisioning and Security Audit.
+- Milestone 2 (Month 3): 35% payment on LLM Guardrail Pipeline and Database Failover testing.
+- Milestone 3 (Month 6): 40% final payment upon Zero-Downtime Production Handover and 30-day warranty.
+- Intellectual Property: All proprietary models, Terraform scripts, and custom code assign to Client immediately upon milestone sign-off.
+- Penalty Clause: $500 per hour deduction for unresolved P0 downtime exceeding SLA limits.
+
+3. CANDIDATE REQUIREMENTS:
+- Proven enterprise experience in Kubernetes, Terraform, and AI safety pipelines.
+- Willingness to align on weekly sprint reviews and bi-weekly milestone escrow releases.
