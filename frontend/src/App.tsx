@@ -34,6 +34,19 @@ import {
   type JobAnalysisResult,
 } from "./lib/api";
 
+function cleanTitle(title: string): string {
+  if (!title) return "Commercial Negotiation Engagement";
+  return title
+    .replace(/\[!\[[^\]]*\]\([^)]*\)\]\([^)]*\)/g, "")
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/https?:\/\/\S+/g, "")
+    .replace(/[#*_`~|]/g, "")
+    .replace(/^[\s·•\-_/]+|[\s·•\-_/]+$/g, "")
+    .replace(/\s+/g, " ")
+    .trim() || "Commercial Negotiation Engagement";
+}
+
 // ── Bulletproof Audio Player ───────────────────────────────
 function playBase64Audio(b64: string): Promise<void> {
   return new Promise((resolve) => {
@@ -167,7 +180,7 @@ function SetupPanel({ onStart }: { onStart: (setup: NegotiationSetup, docName?: 
 
     if (result.currency) setCurrency(result.currency);
     if (result.detected_currency) setCurrency(result.detected_currency);
-    setSubject(result.project_title || "Enterprise Commercial Engagement");
+    setSubject(cleanTitle(result.project_title || "Enterprise Commercial Engagement"));
 
     const cfgA = result.recommended_setup?.agent_a_config || result.agent_a || {};
     const cfgB = result.recommended_setup?.agent_b_config || result.agent_b || {};
@@ -981,25 +994,34 @@ function NegotiationArena({
         paddingBottom: "10px",
         borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
         flexShrink: 0,
-        height: "44px",
+        height: "46px",
         boxSizing: "border-box"
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0, flexShrink: 1 }}>
           <DealRoomLogo size={24} />
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ fontSize: "14px", fontWeight: "900", color: "#ffffff" }}>
-                {setup.subject}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+            <span
+              title={cleanTitle(setup.subject)}
+              style={{
+                fontSize: "13.5px",
+                fontWeight: "800",
+                color: "#ffffff",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                maxWidth: "280px"
+              }}
+            >
+              {cleanTitle(setup.subject)}
+            </span>
+            <span style={{ fontSize: "10px", fontWeight: 700, color: "#94a3b8", padding: "2px 6px", borderRadius: "4px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", flexShrink: 0 }}>
+              #{sessionId.substring(0, 8)}
+            </span>
+            {docName && (
+              <span style={{ fontSize: "10px", fontWeight: 700, color: "#4ade80", background: "rgba(74,222,128,0.1)", padding: "2px 6px", borderRadius: "4px", border: "1px solid rgba(74,222,128,0.2)", display: "flex", alignItems: "center", gap: "3px", flexShrink: 0 }}>
+                <DocIcon size={10} /> {docName}
               </span>
-              <span style={{ fontSize: "10.5px", color: "#94a3b8", padding: "1px 6px", borderRadius: "4px", background: "rgba(255,255,255,0.06)" }}>
-                #{sessionId.substring(0, 8)}
-              </span>
-              {docName && (
-                <span style={{ fontSize: "10.5px", color: "#4ade80", background: "rgba(74,222,128,0.1)", padding: "1px 6px", borderRadius: "4px", border: "1px solid rgba(74,222,128,0.2)" }}>
-                  <DocIcon size={10} /> {docName}
-                </span>
-              )}
-            </div>
+            )}
           </div>
         </div>
 

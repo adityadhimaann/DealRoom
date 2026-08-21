@@ -45,6 +45,26 @@ OUTPUT FORMAT (Strictly valid JSON):
 
 
 class AgentService:
+    def _clean_markdown_title(self, text: str) -> str:
+        if not text:
+            return "Commercial Engagement"
+        # Remove markdown images and badges [![...](...)](...)
+        t = re.sub(r'\[!\[[^\]]*\]\([^)]*\)\]\([^)]*\)', '', text)
+        t = re.sub(r'!\[[^\]]*\]\([^)]*\)', '', t)
+        # Convert markdown links [Text](url) to Text
+        t = re.sub(r'\[([^\]]+)\]\([^)]*\)', r'', t)
+        # Remove html tags
+        t = re.sub(r'<[^>]+>', '', t)
+        # Remove markdown symbols
+        t = re.sub(r'[#*_`~|]', '', t)
+        # Remove URLs
+        t = re.sub(r'https?://\S+', '', t)
+        # Clean extra spaces and punctuation
+        t = re.sub(r'[\s·•\-_/]+$', '', t)
+        t = re.sub(r'^[\s·•\-_/]+', '', t)
+        t = re.sub(r'\s+', ' ', t).strip()
+        return t or "Commercial Engagement"
+
     """Multi-provider negotiation engine with dynamic role synthesis, rational bargaining guardrails, and zero repetition."""
 
     def __init__(self, gemini_api_key: str, gemini_model: str,
@@ -425,12 +445,13 @@ Return strictly a JSON object with project_title, urgency_level, client_persona,
         hourly_calc = self._calculate_hourly_contract(raw_text, currency) if raw_text else None
         detected_base = self._detect_budget_from_text(raw_text, currency) if raw_text else None
 
-        title = d.get("project_title")
-        if not title or any(w in str(title).lower() for w in ["job project", "attached document", "posted", "proposals", "hours ago"]):
+        raw_title = d.get("project_title")
+        if not raw_title or any(w in str(raw_title).lower() for w in ["job project", "attached document", "posted", "proposals", "hours ago"]):
             if raw_text:
-                title = self._clean_job_title_from_text(raw_text)
+                raw_title = self._clean_job_title_from_text(raw_text)
             else:
-                title = fallback_title
+                raw_title = fallback_title
+        title = self._clean_markdown_title(str(raw_title))
 
         urgency = d.get("urgency_level") or "High"
         persona = d.get("client_persona") or "Technical Hiring Lead"
