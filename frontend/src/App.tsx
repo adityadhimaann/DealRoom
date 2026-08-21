@@ -90,6 +90,146 @@ interface TurnWithAudio extends NegotiationTurn {
   acoustics?: AcousticData;
 }
 
+
+interface NegotiationTemplate {
+  id: string;
+  name: string;
+  icon: string;
+  subject: string;
+  currency: string;
+  rawText: string;
+  deliverables: string[];
+  agentA: {
+    role: string;
+    ideal: number;
+    min: number;
+    strategy: "balanced" | "aggressive" | "collaborative";
+    priorities: string;
+  };
+  agentB: {
+    role: string;
+    ideal: number;
+    min: number;
+    strategy: "balanced" | "aggressive" | "collaborative";
+    priorities: string;
+  };
+}
+
+const PRESET_TEMPLATES: NegotiationTemplate[] = [
+  {
+    id: "cloud-security",
+    name: "Enterprise Cloud & AI Security Retainer",
+    icon: "🛡️",
+    subject: "Enterprise Cloud & AI Security Platform Retainer",
+    currency: "$",
+    rawText: "STATEMENT OF WORK — ENTERPRISE CLOUD & AI SECURITY PLATFORM\nClient: Global Logistics Enterprise\nScope: Multi-region Kubernetes migration, Terraform IaC, LLM guardrails, PII masking, 99.95% SLA.\nEngagement: 6-Month Retainer with Milestone Escrow.",
+    deliverables: [
+      "Multi-region Kubernetes Cluster & Terraform IaC",
+      "Real-Time LLM Guardrails & PII Masking Pipeline",
+      "PostgreSQL High-Availability Cloud Replication",
+      "99.95% System Uptime SLA with 24/7 Support"
+    ],
+    agentA: {
+      role: "Lead Cloud & AI Security Architect",
+      ideal: 45000,
+      min: 35000,
+      strategy: "balanced",
+      priorities: "25% upfront escrow, SLA liability cap, weekly milestone sign-offs"
+    },
+    agentB: {
+      role: "VP Technology Procurement",
+      ideal: 28000,
+      min: 35000,
+      strategy: "balanced",
+      priorities: "24/7 SLA guarantee, strict penalty clauses, milestone escrow"
+    }
+  },
+  {
+    id: "ai-saas",
+    name: "Full-Stack Next.js AI SaaS MVP",
+    icon: "⚡",
+    subject: "Full-Stack Next.js & Generative AI SaaS MVP",
+    currency: "$",
+    rawText: "PROJECT SPECIFICATION — FULL-STACK NEXT.JS & AI PLATFORM\nClient: YC-backed Fintech Startup\nScope: Next.js App Router, Tailwind/CSS, Supabase Auth & PostgreSQL, Stripe Billing, Groq/OpenAI streaming LLM pipelines.",
+    deliverables: [
+      "Next.js App Router UI with Specular Glass Design",
+      "Supabase PostgreSQL with Row Level Security",
+      "Stripe Subscription Billing & Webhook Engine",
+      "Sub-second Streaming LLM Agent Pipelines"
+    ],
+    agentA: {
+      role: "Senior Full-Stack AI Engineer",
+      ideal: 24000,
+      min: 18000,
+      strategy: "collaborative",
+      priorities: "30% kickoff deposit, Figma asset delivery, 2 revision rounds"
+    },
+    agentB: {
+      role: "Startup Founder & CTO",
+      ideal: 14000,
+      min: 20000,
+      strategy: "balanced",
+      priorities: "4-week speed-to-market, 90%+ test coverage, production deployment"
+    }
+  },
+  {
+    id: "mobile-app",
+    name: "Cross-Platform React Native App",
+    icon: "📱",
+    subject: "Cross-Platform iOS & Android Mobile Application",
+    currency: "$",
+    rawText: "MOBILE APP SOW — CROSS-PLATFORM FINTECH & WALLET APP\nClient: Digital Banking Group\nScope: React Native / Expo, Biometric Auth, Real-Time WebSockets balance feed, Push Notifications, App Store submission.",
+    deliverables: [
+      "React Native iOS & Android Production Bundle",
+      "Biometric FaceID / Fingerprint Authentication",
+      "Real-Time WebSockets Balance & Notification Feed",
+      "Apple App Store & Google Play Store Approval"
+    ],
+    agentA: {
+      role: "Principal Mobile Solutions Consultant",
+      ideal: 32000,
+      min: 25000,
+      strategy: "balanced",
+      priorities: "50% milestone escrow, API stability guarantee, App Store sign-off"
+    },
+    agentB: {
+      role: "Head of Mobile Product",
+      ideal: 20000,
+      min: 28000,
+      strategy: "aggressive",
+      priorities: "Zero crash rate, 60fps performance, comprehensive QA report"
+    }
+  },
+  {
+    id: "llm-rag",
+    name: "Enterprise LLM Fine-Tuning & RAG Pipeline",
+    icon: "🤖",
+    subject: "Enterprise Private LLM Fine-Tuning & RAG Vector Engine",
+    currency: "$",
+    rawText: "ENTERPRISE RFP — PRIVATE LLM DEPLOYMENT & VECTOR RETRIEVAL\nClient: Healthcare Compliance Network\nScope: On-prem Llama-3 fine-tuning, Qdrant/Pinecone hybrid vector search, HIPAA audit logging, sub-50ms inference latency.",
+    deliverables: [
+      "Custom LoRA Fine-Tuned Llama 3 70B Models",
+      "Hybrid Sparse-Dense Vector Retrieval (RAG)",
+      "HIPAA-Compliant Encrypted Audit Logging Engine",
+      "High-Throughput vLLM GPU Serving Cluster"
+    ],
+    agentA: {
+      role: "Chief AI & RAG Infrastructure Scientist",
+      ideal: 55000,
+      min: 42000,
+      strategy: "balanced",
+      priorities: "GPU cloud compute cost reimbursement, 40% initial tranche"
+    },
+    agentB: {
+      role: "Enterprise Chief Information Security Officer",
+      ideal: 35000,
+      min: 48000,
+      strategy: "balanced",
+      priorities: "Zero data leakage SLA, SOC2 compliance audit, on-prem weights handoff"
+    }
+  }
+];
+
 // ── Compact Modern UI Input Field ──────────────────────────
 function ModernInput({
   label,
@@ -171,6 +311,28 @@ function SetupPanel({ onStart }: { onStart: (setup: NegotiationSetup, docName?: 
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [analysisInsights, setAnalysisInsights] = useState<JobAnalysisResult | null>(null);
   const [isAutoConfigured, setIsAutoConfigured] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("cloud-security");
+
+  const applyTemplate = (t: NegotiationTemplate) => {
+    setSelectedTemplate(t.id);
+    setSubject(t.subject);
+    setCurrency(t.currency);
+    setRawTextInput(t.rawText);
+    setARole(t.agentA.role);
+    setAIdeal(t.agentA.ideal);
+    setAMin(t.agentA.min);
+    setAStrategy(t.agentA.strategy);
+    setAPriorities(t.agentA.priorities);
+
+    setBRole(t.agentB.role);
+    setBIdeal(t.agentB.ideal);
+    setBMin(t.agentB.min);
+    setBStrategy(t.agentB.strategy);
+    setBPriorities(t.agentB.priorities);
+
+    setIsAutoConfigured(true);
+    setSuccessMessage(`Loaded "${t.name}" template with calibrated game-theory bounds!`);
+  };
   const [isLaunching, setIsLaunching] = useState(false);
 
   const applyAnalysisToForm = (result: any) => {
@@ -390,6 +552,32 @@ function SetupPanel({ onStart }: { onStart: (setup: NegotiationSetup, docName?: 
             <NeonLogo size={14} /> Neon DB
           </button>
         </div>
+      </div>
+
+            {/* ── 1-CLICK ENTERPRISE NEGOTIATION TEMPLATES ── */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+        marginTop: "10px",
+        flexShrink: 0,
+        overflowX: "auto",
+        paddingBottom: "2px"
+      }}>
+        <span style={{ fontSize: "10.5px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.8px", whiteSpace: "nowrap" }}>
+          ⚡ 1-Click Scenarios:
+        </span>
+        {PRESET_TEMPLATES.map((tmpl) => (
+          <button
+            key={tmpl.id}
+            type="button"
+            className={`template-chip ${selectedTemplate === tmpl.id ? "active" : ""}`}
+            onClick={() => applyTemplate(tmpl)}
+          >
+            <span>{tmpl.icon}</span>
+            <span>{tmpl.name}</span>
+          </button>
+        ))}
       </div>
 
       {/* ── MAIN DASHBOARD (2-COLUMN HIGH DENSITY GRID) ── */}
@@ -1085,11 +1273,13 @@ function NegotiationArena({
           display: "flex",
           flexDirection: "column",
           gap: "10px",
-          background: "rgba(255, 255, 255, 0.02)",
+          background: speakingAgent === "A" ? "rgba(192, 132, 252, 0.04)" : "rgba(255, 255, 255, 0.02)",
           border: `1px solid ${speakingAgent === "A" ? "#c084fc" : "rgba(255, 255, 255, 0.08)"}`,
+          boxShadow: speakingAgent === "A" ? "0 0 35px rgba(192, 132, 252, 0.25)" : "none",
           borderRadius: "14px",
           padding: "14px",
-          overflowY: "auto"
+          overflowY: "auto",
+          transition: "all 0.3s ease"
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <div style={{
@@ -1449,11 +1639,13 @@ function NegotiationArena({
           display: "flex",
           flexDirection: "column",
           gap: "10px",
-          background: "rgba(255, 255, 255, 0.02)",
+          background: speakingAgent === "B" ? "rgba(56, 189, 248, 0.04)" : "rgba(255, 255, 255, 0.02)",
           border: `1px solid ${speakingAgent === "B" ? "#38bdf8" : "rgba(255, 255, 255, 0.08)"}`,
+          boxShadow: speakingAgent === "B" ? "0 0 35px rgba(56, 189, 248, 0.25)" : "none",
           borderRadius: "14px",
           padding: "14px",
-          overflowY: "auto"
+          overflowY: "auto",
+          transition: "all 0.3s ease"
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <div style={{
