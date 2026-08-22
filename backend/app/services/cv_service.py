@@ -29,7 +29,7 @@ class CVService:
     def __init__(self):
         settings = get_settings()
         self.groq_client = Groq(api_key=settings.groq_api_key)
-        self.model = "llama-3.3-70b-versatile"
+        self.model = "openai/gpt-oss-120b"
 
     def extract_text_from_pdf(self, file_bytes: bytes) -> str:
         """Extract raw text from PDF bytes."""
