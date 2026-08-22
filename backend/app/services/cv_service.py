@@ -142,49 +142,30 @@ OUTPUT INSTRUCTIONS:
 Return ONLY valid JSON matching this schema:
 {json.dumps(schema, indent=2)}"""
 
-        # Tier 1: Try Groq
+        # Tier 1: Try Primary Groq
         if self.groq_client:
-            for model_name in ["openai/gpt-oss-120b", "qwen/qwen3.6-27b", "groq/compound"]:
-                try:
-                    response = self.groq_client.chat.completions.create(
-                        messages=[
-                            {"role": "system", "content": "You are an expert resume parser. Always output strictly valid JSON."},
-                            {"role": "user", "content": prompt}
-                        ],
-                        model=model_name,
-                        response_format={"type": "json_object"},
-                        temperature=0.1
-                    )
-                    content = response.choices[0].message.content.strip()
-                    data = json.loads(content)
-                    if isinstance(data, list) and len(data) > 0 and isinstance(data[0], dict):
-                        data = data[0]
-                    if isinstance(data, dict) and data.get("name"):
-                        self._ensure_summary(data)
-                        return data
-                except Exception as ge:
-                    logger.warning(f"Groq {model_name} notice: {ge}")
-
-        # Tier 2: Try Gemini
-        if self.gemini_client:
             try:
-                gem_resp = self.gemini_client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=prompt
+                response = self.groq_client.chat.completions.create(
+                    messages=[
+                        {"role": "system", "content": "You are an expert resume parser. Always output strictly valid JSON."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    model="openai/gpt-oss-120b",
+                    response_format={"type": "json_object"},
+                    temperature=0.1,
+                    timeout=5.0
                 )
-                text_clean = gem_resp.text.strip()
-                if "```json" in text_clean:
-                    text_clean = text_clean.split("```json")[1].split("```")[0].strip()
-                elif "```" in text_clean:
-                    text_clean = text_clean.split("```")[1].split("```")[0].strip()
-                data = json.loads(text_clean)
+                content = response.choices[0].message.content.strip()
+                data = json.loads(content)
+                if isinstance(data, list) and len(data) > 0 and isinstance(data[0], dict):
+                    data = data[0]
                 if isinstance(data, dict) and data.get("name"):
                     self._ensure_summary(data)
                     return data
-            except Exception as gme:
-                logger.warning(f"Gemini notice: {gme}")
+            except Exception as ge:
+                logger.warning(f"Groq notice ({ge}), activating instant intelligent extractor...")
 
-        # Tier 3: Guaranteed Heuristic Fallback
+        # Tier 2: Instant Intelligent Heuristic Extractor (Guaranteed <10ms response)
         logger.info("Using intelligent heuristic CV extraction fallback")
         return self._fallback_heuristic_extraction(cv_text)
 
