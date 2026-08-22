@@ -163,7 +163,23 @@ class AgentService:
 
         turn_num = len(turns) + 1
         if not history:
-            messages.append({"role": "user", "content": f"Round 1: Deliver opening proposal in JSON detailing technical deliverables and initial price."})
+            if agent == "A":
+                messages.append({
+                    "role": "user",
+                    "content": (
+                        f"Round 1 Opening Speech: Start with a professional greeting. Introduce yourself/the candidate, "
+                        f"explain specifically how your background, verified CV expertise ({config.context or 'Engineering'}), and past projects directly align with the deliverables for '{subject}', "
+                        f"and propose your opening milestone terms and commercial rate of {currency}{config.ideal_price:,.0f}."
+                    )
+                })
+            else:
+                messages.append({
+                    "role": "user",
+                    "content": (
+                        f"Round 1 Opening Counter: Welcome the candidate, state the client's quality standards and milestone expectations for '{subject}', "
+                        f"and anchor your opening commercial budget target at {currency}{config.ideal_price:,.0f}."
+                    )
+                })
         else:
             last_msg = history[-1]["content"] if history else ""
             active_w = self._peek_whisper(session_id, agent)

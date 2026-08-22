@@ -21,6 +21,9 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["negotiation"])
 ws_router = APIRouter(tags=["websocket"])
 
+# Active WebSocket connections per session
+session_subscribers: dict[str, list[WebSocket]] = {}
+
 orchestrator: NegotiationOrchestrator = None
 
 

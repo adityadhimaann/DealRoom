@@ -996,7 +996,7 @@ function NegotiationArena({
 }) {
   const currency = setup.currency || "$";
   const [turns, setTurns] = useState<TurnWithAudio[]>([]);
-  const [isAutoRunning, setIsAutoRunning] = useState(false);
+  const [isAutoRunning, setIsAutoRunning] = useState(true);
   const [isThinking, setIsThinking] = useState<string | null>(null);
   const [speakingAgent, setSpeakingAgent] = useState<string | null>(null);
   const [isComplete, setIsComplete] = useState(false);
@@ -1023,7 +1023,7 @@ function NegotiationArena({
   const [unreadHumanCount, setUnreadHumanCount] = useState(0);
   const wsRef = useRef<WebSocket | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const autoRunningRef = useRef(false);
+  const autoRunningRef = useRef(true);
 
   useEffect(() => { autoRunningRef.current = isAutoRunning; }, [isAutoRunning]);
   useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [turns, isThinking]);
@@ -1048,6 +1048,14 @@ function NegotiationArena({
   useEffect(() => {
     const ws = new WebSocket(`${WS_BASE}/sessions/${sessionId}`);
     wsRef.current = ws;
+    ws.onopen = () => {
+      // Autonomously kick off Round 1 greeting and intro speech by default on joining!
+      setTimeout(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ action: "step" }));
+        }
+      }, 400);
+    };
     ws.onmessage = async (event) => {
       try {
         const data = JSON.parse(event.data);
