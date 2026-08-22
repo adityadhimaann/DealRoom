@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from app.services.matchmaking_service import matchmaking
 from app.services.cv_service import cv_service
+from app.services.llamaindex_service import llamaindex_service
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +72,9 @@ async def upload_cv(file: UploadFile = File(...)):
         structured_data = cv_service.parse_cv_to_structured_data(text)
         return structured_data
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to analyze CV data.")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Failed to analyze CV data: {str(e)}")
 
 @router.post("/register/freelancer")
 async def register_freelancer(req: RegisterFreelancerRequest):
