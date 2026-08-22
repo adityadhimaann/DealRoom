@@ -1,3 +1,5 @@
+import re
+
 with open('/Users/aditya/Downloads/DealRoom/backend/app/services/cv_service.py', 'r') as f:
     code = f.read()
 
