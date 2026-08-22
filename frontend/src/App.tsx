@@ -1406,6 +1406,7 @@ function NegotiationArena({
   ]);
   const [humanInput, setHumanInput] = useState("");
   const [unreadHumanCount, setUnreadHumanCount] = useState(0);
+  const [whisperToast, setWhisperToast] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const autoRunningRef = useRef(true);
@@ -1442,7 +1443,11 @@ function NegotiationArena({
     ws.onmessage = async (event) => {
       try {
         const data = JSON.parse(event.data);
-        if (data.type === "human_chat_message") {
+        if (data.type === "whisper_applied") {
+          setWhisperToast(`🤫 Whisper Applied to Agent ${data.agent}: "${data.instruction || 'Instruction Set'}"`);
+          setTimeout(() => setWhisperToast(null), 4000);
+        }
+        else if (data.type === "human_chat_message") {
           setHumanMessages(prev => [...prev, { sender: data.sender, role: data.role, text: data.text, timestamp: data.timestamp }]);
           if (centerTab !== "human_chat") {
             setUnreadHumanCount(c => c + 1);
@@ -1496,6 +1501,14 @@ function NegotiationArena({
 
   return (
     <div style={{ height: "100vh", width: "100vw", overflow: "hidden", display: "flex", flexDirection: "column", boxSizing: "border-box", padding: "12px 20px", background: "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(56,189,248,0.08), transparent 70%), #050508", color: "#f8fafc" }}>
+      
+      {/* 🤫 Glowing Whisper Banner Toast */}
+      {whisperToast && (
+        <div style={{ position: "fixed", top: "70px", left: "50%", transform: "translateX(-50%)", zIndex: 9999, background: "linear-gradient(135deg, rgba(192,132,252,0.95), rgba(56,189,248,0.95))", color: "#000", padding: "10px 22px", borderRadius: "30px", fontWeight: 900, fontSize: "13px", boxShadow: "0 8px 32px rgba(192,132,252,0.6)", display: "flex", alignItems: "center", gap: "8px" }}>
+          <span style={{ fontSize: "16px" }}>🤫</span> {whisperToast}
+        </div>
+      )}
+
       {/* Top Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "10px", borderBottom: "1px solid rgba(255,255,255,0.08)", flexShrink: 0, height: "46px", boxSizing: "border-box" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0, flexShrink: 1 }}>

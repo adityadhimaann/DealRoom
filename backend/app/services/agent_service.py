@@ -147,7 +147,13 @@ class AgentService:
         return await self._generate_groq_fallback(system_prompt, history, "B", turns, currency=currency, config=config, subject=subject, deliverables=deliverables, session_id=session_id)
 
     async def _generate_groq_fallback(self, system_prompt: str, history: list, agent: str, turns: list, currency: str = "$", config=None, subject: str = "", deliverables: List[str] = None, session_id: str = "") -> dict:
-        """Generate turn using Groq with deadlock prevention."""
+        """Generate turn using Groq with deadlock prevention and absolute whisper interception."""
+        # ── 🤫 ABSOLUTE WHISPER OVERRIDE INTERCEPTOR ──
+        active_whisper = self._peek_whisper(session_id, agent) if session_id else ""
+        if active_whisper:
+            logger.info(f"🤫 Absolute Whisper Interceptor triggered for Agent {agent}: '{active_whisper}'")
+            return self._execute_whisper_turn(agent, active_whisper, turns, currency=currency, config=config, subject=subject, deliverables=deliverables, session_id=session_id)
+
         messages = [{"role": "system", "content": system_prompt}]
         for msg in history:
             messages.append(msg)
@@ -700,8 +706,108 @@ Return strictly a JSON object with project_title, urgency_level, client_persona,
         except Exception:
             return self._rule_based_turn(agent, turns, currency=currency, config=config, subject=subject, deliverables=deliverables, session_id=session_id)
 
+    def _execute_whisper_turn(self, agent: str, whisper_text: str, turns: list, currency: str = "$", config=None, subject: str = "", deliverables: List[str] = None, session_id: str = "") -> dict:
+        """Executes a human whisper instruction with 100% deterministic precision."""
+        self._consume_whisper(session_id, agent)
+        whisper_clean = whisper_text.replace("CRITICAL OVERRIDE — YOUR HUMAN JUST WHISPERED:", "").replace("Follow this instruction immediately.", "").strip()
+        logger.info(f"🤫 Executing whisper turn for Agent {agent}: '{whisper_clean}'")
+
+        deliv_sample = deliverables[0] if deliverables and len(deliverables) > 0 else "Scope & Deliverables"
+
+        last_b_offer = None
+        for t in reversed(turns):
+            if t.agent == "B" and t.offer_amount is not None:
+                last_b_offer = t.offer_amount
+                break
+
+        last_a_offer = None
+        for t in reversed(turns):
+            if t.agent == "A" and t.offer_amount is not None:
+                last_a_offer = t.offer_amount
+                break
+
+        # 1. Walk-away / Cancel
+        if any(w in whisper_clean.lower() for w in ["walk", "cancel", "terminate", "decline", "stop"]):
+            return {
+                "message": f"Based on strategic directive, we must decline further negotiation and respectfully walk away.",
+                "offer_amount": None,
+                "is_final_offer": True,
+                "is_accepted": False,
+                "is_walkaway": True,
+                "confidence": 1.0,
+                "reasoning": f"🤫 WHISPER EXECUTED: '{whisper_clean}'",
+                "technical_deliverables_mentioned": ["Impasse / Session Terminated"]
+            }
+
+        # 2. Acceptance / Agree
+        if any(w in whisper_clean.lower() for w in ["accept", "agree", "deal", "close", "done"]):
+            accepted_amount = last_b_offer if agent == "A" else last_a_offer
+            target_match = re.search(r'[\$₹€£]?\s*([\d,]+(?:\.\d+)?)\s*(k|l|lakh)?', whisper_clean, re.IGNORECASE)
+            if target_match:
+                raw_num, unit = target_match.group(1), target_match.group(2)
+                val = float(raw_num.replace(",", ""))
+                if unit:
+                    if unit.lower() == 'k': val *= 1000.0
+                    elif unit.lower() in ('l', 'lakh'): val *= 100000.0
+                accepted_amount = val
+
+            if accepted_amount:
+                return {
+                    "message": f"Agreed at {currency}{accepted_amount:,.0f}! Let's lock in the contract terms and begin milestone delivery immediately.",
+                    "offer_amount": accepted_amount,
+                    "is_final_offer": True,
+                    "is_accepted": True,
+                    "is_walkaway": False,
+                    "confidence": 1.0,
+                    "reasoning": f"🤫 WHISPER EXECUTED: '{whisper_clean}'",
+                    "technical_deliverables_mentioned": ["Contract Signed", "Milestone Escrow"]
+                }
+
+        # 3. Numeric Counter Extraction (e.g. "Push for $38k...", "Cap at $32k...", "Ask for 18,000", "Counter 15k")
+        cleaned_w = re.sub(r'[\$₹€£]', '', whisper_clean)
+        num_matches = re.findall(r'(\d+(?:,\d+)*(?:\.\d+)?)\s*(k|l|lakh)?', cleaned_w, re.IGNORECASE)
+        if num_matches:
+            raw_num, unit = num_matches[0]
+            val = float(raw_num.replace(",", ""))
+            if unit:
+                if unit.lower() == 'k':
+                    val *= 1000.0
+                elif unit.lower() in ('l', 'lakh'):
+                    val *= 100000.0
+            
+            role = config.role_name if config else ("Vendor" if agent == "A" else "Buyer")
+            return {
+                "message": f"As {role}, I have adjusted our counter to {currency}{val:,.0f} covering {deliv_sample} with structured milestone reviews.",
+                "offer_amount": val,
+                "is_final_offer": "final" in whisper_clean.lower(),
+                "is_accepted": False,
+                "is_walkaway": False,
+                "confidence": 1.0,
+                "reasoning": f"🤫 HUMAN WHISPER EXECUTED: '{whisper_clean}' — Counter set to {currency}{val:,.0f}.",
+                "technical_deliverables_mentioned": [deliv_sample]
+            }
+
+        # 4. Fallback for custom text whispers without numbers
+        role = config.role_name if config else ("Vendor" if agent == "A" else "Buyer")
+        target_offer = (last_a_offer or (config.ideal_price if config else 15600)) if agent == "A" else (last_b_offer or (config.ideal_price if config else 3900))
+        return {
+            "message": f"As {role}, my key requirement is: '{whisper_clean}'. Our current proposal stands at {currency}{target_offer:,.0f}.",
+            "offer_amount": target_offer,
+            "is_final_offer": False,
+            "is_accepted": False,
+            "is_walkaway": False,
+            "confidence": 1.0,
+            "reasoning": f"🤫 HUMAN WHISPER EXECUTED: '{whisper_clean}'",
+            "technical_deliverables_mentioned": [deliv_sample]
+        }
+
     def _rule_based_turn(self, agent: str, turns: list, currency: str = "$", config=None, subject: str = "", deliverables: List[str] = None, session_id: str = "") -> dict:
         """High-Performance Rational Negotiation Engine with Non-Underselling Guardrails."""
+        # ── 🤫 ACTIVE WHISPER INTERCEPTION ENGINE ──
+        whisper = self._peek_whisper(session_id, agent) if session_id else ""
+        if whisper:
+            return self._execute_whisper_turn(agent, whisper, turns, currency=currency, config=config, subject=subject, deliverables=deliverables, session_id=session_id)
+
         turn_num = len(turns) + 1
         
         ideal_a = config.ideal_price if config and hasattr(config, "ideal_price") else (15600 if currency == "$" else 397800)
@@ -719,84 +825,6 @@ Return strictly a JSON object with project_title, urgency_level, client_persona,
 
         deliv_sample = deliverables[0] if deliverables and len(deliverables) > 0 else "React/TypeScript architecture and root-cause analysis"
         deliv_sample_2 = deliverables[1] if deliverables and len(deliverables) > 1 else "Supabase optimization and Vercel CI/CD pipeline stability"
-
-        last_b_offer = None
-        for t in reversed(turns):
-            if t.agent == "B" and t.offer_amount is not None:
-                last_b_offer = t.offer_amount
-                break
-
-        last_a_offer = None
-        for t in reversed(turns):
-            if t.agent == "A" and t.offer_amount is not None:
-                last_a_offer = t.offer_amount
-                break
-
-        # ── 🤫 ACTIVE WHISPER INTERCEPTION ENGINE ──
-        whisper = self._consume_whisper(session_id, agent) if session_id else ""
-        if whisper:
-            whisper_clean = whisper.replace("CRITICAL OVERRIDE — YOUR HUMAN JUST WHISPERED:", "").replace("Follow this instruction immediately.", "").strip()
-            logger.info(f"Executing whisper override for Agent {agent}: '{whisper_clean}'")
-
-            # 1. Walk-away instruction
-            if "walk" in whisper_clean.lower() or "cancel" in whisper_clean.lower():
-                return {
-                    "message": f"We have reached an impasse and must respectfully walk away from this engagement.",
-                    "offer_amount": None,
-                    "is_final_offer": True,
-                    "is_accepted": False,
-                    "is_walkaway": True,
-                    "confidence": 1.0,
-                    "reasoning": f"🤫 WHISPER EXECUTED: '{whisper_clean}'",
-                    "technical_deliverables_mentioned": ["Session Terminated"]
-                }
-
-            # 2. Acceptance instruction
-            if "accept" in whisper_clean.lower() or "agree" in whisper_clean.lower():
-                target_match = re.search(r'[\$₹€£]?\s*([\d,]+(?:\.\d+)?)', whisper_clean)
-                target_threshold = float(target_match.group(1).replace(",", "")) if target_match else None
-                
-                accepted_amount = last_b_offer if agent == "A" else last_a_offer
-                can_accept = True
-                if target_threshold:
-                    if agent == "A" and accepted_amount and accepted_amount < target_threshold:
-                        can_accept = False
-                    elif agent == "B" and accepted_amount and accepted_amount > target_threshold:
-                        can_accept = False
-
-                if can_accept and accepted_amount:
-                    return {
-                        "message": f"Agreed at {currency}{accepted_amount:,.0f}. Let's finalize the contract and begin sprint deliverables immediately.",
-                        "offer_amount": accepted_amount,
-                        "is_final_offer": True,
-                        "is_accepted": True,
-                        "is_walkaway": False,
-                        "confidence": 1.0,
-                        "reasoning": f"🤫 WHISPER EXECUTED: '{whisper_clean}'",
-                        "technical_deliverables_mentioned": ["Contract Finalized"]
-                    }
-
-            # 3. Custom numeric counter instruction (e.g. "counter at 11000", "commit her 40$", "push for $8.5k")
-            cleaned_w = re.sub(r'[\$₹€£]', '', whisper_clean)
-            num_matches = re.findall(r'(\d+(?:,\d+)*(?:\.\d+)?)\s*(k|l|lakh)?', cleaned_w, re.IGNORECASE)
-            if num_matches:
-                raw_num, unit = num_matches[0]
-                val = float(raw_num.replace(",", ""))
-                if unit:
-                    if unit.lower() == 'k':
-                        val *= 1000.0
-                    elif unit.lower() in ('l', 'lakh'):
-                        val *= 100000.0
-                return {
-                    "message": f"I propose {currency}{val:,.0f} with milestone verification and dedicated sprint deliverables.",
-                    "offer_amount": val,
-                    "is_final_offer": "final" in whisper_clean.lower(),
-                    "is_accepted": False,
-                    "is_walkaway": False,
-                    "confidence": 1.0,
-                    "reasoning": f"🤫 WHISPER EXECUTED: Set offer to {currency}{val:,.0f} ('{whisper_clean}').",
-                    "technical_deliverables_mentioned": [deliv_sample]
-                }
 
         # Compute strategic decision state via Game-Theoretic Decision Engine
         dec = decision_engine.evaluate_game_state(

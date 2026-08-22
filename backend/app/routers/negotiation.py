@@ -544,7 +544,9 @@ async def websocket_negotiation(websocket: WebSocket, session_id: str):
                         "agent": agent,
                         "instruction": instruction,
                     })
-                    await websocket.send_json({"type": "whisper_applied", "agent": agent})
+                    await websocket.send_json({"type": "whisper_applied", "agent": agent, "instruction": instruction})
+                    # 🚀 Execute single turn immediately with the applied whisper!
+                    await run_single_turn()
 
             elif action == "manual_turn":
                 agent = data.get("agent", "A")
