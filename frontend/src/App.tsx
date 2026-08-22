@@ -1113,12 +1113,10 @@ function NegotiationArena({
     const ws = new WebSocket(`${WS_BASE}/sessions/${sessionId}`);
     wsRef.current = ws;
     ws.onopen = () => {
-      // Autonomously kick off Round 1 greeting and intro speech by default on joining!
-      setTimeout(() => {
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ action: "step" }));
-        }
-      }, 400);
+      // Instant zero-delay kick off for Round 1
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ action: "step" }));
+      }
     };
     ws.onmessage = async (event) => {
       try {

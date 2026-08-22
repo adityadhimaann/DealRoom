@@ -24,6 +24,10 @@ ws_router = APIRouter(tags=["websocket"])
 # Active WebSocket connections per session
 session_subscribers: dict[str, list[WebSocket]] = {}
 
+# Early pre-computation cache for zero-latency Turn 1 delivery
+early_precomputed_turn1: dict[str, asyncio.Task] = {}
+
+
 orchestrator: NegotiationOrchestrator = None
 
 
@@ -65,6 +69,50 @@ Priorities: {', '.join(setup.agent_a_config.priorities or [])}
         "agent_b": setup.agent_b_config.role_name,
         "max_turns": setup.max_turns
     })
+
+    # Instant Latency Optimization: Pre-compute Turn 1 opening speech immediately upon session creation
+    async def _precompute_turn1_worker():
+        try:
+            curr = setup.currency or "$"
+            delivs = getattr(setup, "deliverables", []) or []
+            res = await orchestrator.agent_service.generate_turn_agent_a(
+                config=setup.agent_a_config,
+                subject=setup.subject,
+                turns=[],
+                session_id=state.session_id,
+                currency=curr,
+                deliverables=delivs
+            )
+            t = NegotiationTurn(
+                turn_number=1,
+                agent="A",
+                message=res["message"],
+                offer_amount=res.get("offer_amount"),
+                is_final_offer=res.get("is_final_offer", False),
+                is_accepted=res.get("is_accepted", False),
+                is_walkaway=res.get("is_walkaway", False),
+                confidence=res.get("confidence", 0.90),
+                reasoning=res.get("reasoning", ""),
+                technical_deliverables_mentioned=res.get("technical_deliverables_mentioned", []),
+            )
+            audio_b64 = None
+            try:
+                audio_b64 = await orchestrator.tts_service.synthesize_base64(t.message, "A")
+            except Exception:
+                pass
+            return {
+                "turn": t,
+                "audio_base64": audio_b64,
+                "is_complete": False,
+                "deal_reached": False,
+                "final_amount": None,
+                "deal_quality_score": None
+            }
+        except Exception as err:
+            logger.error(f"Early Turn 1 precomputation notice: {err}")
+            return None
+
+    early_precomputed_turn1[state.session_id] = asyncio.create_task(_precompute_turn1_worker())
     return state
 
 
@@ -347,7 +395,22 @@ async def websocket_negotiation(websocket: WebSocket, session_id: str):
 
         payload_data = None
 
-        if precomputed_task:
+        # Check if Turn 1 was already computed at session initialization for instant delivery
+        if turn_number == 1 and session_id in early_precomputed_turn1:
+            early_task = early_precomputed_turn1.pop(session_id, None)
+            if early_task:
+                if not early_task.done():
+                    await websocket.send_json({
+                        "type": "turn_thinking",
+                        "turn_number": turn_number,
+                        "agent": current_agent,
+                        "role_name": agent_name,
+                    })
+                    payload_data = await early_task
+                else:
+                    payload_data = early_task.result()
+
+        if not payload_data and precomputed_task:
             if not precomputed_task.done():
                 await websocket.send_json({
                     "type": "turn_thinking",

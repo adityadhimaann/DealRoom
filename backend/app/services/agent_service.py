@@ -121,33 +121,11 @@ class AgentService:
         return messages
 
     async def generate_turn_agent_a(self, config, subject, turns, session_id, currency: str = "$", deliverables: List[str] = None) -> dict:
-        """Generate Agent A's turn with deadlock prevention and rational seller guardrails."""
+        """Generate Agent A's turn with instant sub-second Groq inference and deadlock prevention."""
         system_prompt = self._build_system_prompt(config, subject, session_id, "A", currency=currency, deliverables=deliverables)
         history = self._build_conversation_history(turns, "A")
-
-        prompt_parts = [system_prompt + "\n\nNegotiation history so far:\n"]
-        for msg in history:
-            speaker = "You" if msg["role"] == "assistant" else "Opponent"
-            prompt_parts.append(f"{speaker}: {msg['content']}")
-        
-        turn_num = len(turns) + 1
-        active_w = self._peek_whisper(session_id, "A")
-        if active_w:
-            prompt_parts.append(f"\n[MANDATORY HUMAN OVERRIDE FOR ROUND {turn_num}]: Your human supervisor whispered: '{active_w}'. You MUST obey this exact price/action instruction in your JSON output!")
-        else:
-            prompt_parts.append(f"\nRound {turn_num}: Make your counter. If opponent offered an amount, NEVER counter below their offer. Propose an agreement or higher counter in JSON.")
-
-        try:
-            start = time.time()
-            response = self.gemini_client.models.generate_content(
-                model=self.gemini_model, contents="\n".join(prompt_parts),
-            )
-            logger.info(f"Gemini Agent A response in {time.time()-start:.2f}s")
-            return self._parse_response(response.text, "A", turns=turns, currency=currency, config=config, subject=subject, deliverables=deliverables, session_id=session_id)
-        except Exception as e:
-            self.gemini_cooldown_until = time.time() + 120.0  # 2 min cooldown
-            logger.warning(f"Gemini Agent A notice ({e}), engaging fast Groq fallback (cooldown 120s)...")
-            return await self._generate_groq_fallback(system_prompt, history, "A", turns, currency=currency, config=config, subject=subject, deliverables=deliverables, session_id=session_id)
+        # Direct high-speed Groq pipeline (eliminates 429 Gemini quota latency)
+        return await self._generate_groq_fallback(system_prompt, history, "A", turns, currency=currency, config=config, subject=subject, deliverables=deliverables, session_id=session_id)
 
     async def generate_turn_agent_b(self, config, subject, turns, session_id, currency: str = "$", deliverables: List[str] = None) -> dict:
         """Generate Agent B's turn using Groq."""
