@@ -22,12 +22,14 @@ class CVExtractionResult(BaseModel):
     years_of_experience: int = Field(description="Estimated total years of professional experience")
     education: str = Field(description="Highest degree or relevant education")
 
+from groq import Groq
+import os
+
 class CVService:
     def __init__(self):
         settings = get_settings()
-        self.client = genai.Client(api_key=settings.gemini_api_key)
-        # Using flash for fast structural extraction
-        self.model = "gemini-2.5-flash"
+        self.groq_client = Groq(api_key=settings.groq_api_key)
+        self.model = "llama-3.3-70b-versatile"
 
     def extract_text_from_pdf(self, file_bytes: bytes) -> str:
         """Extract raw text from PDF bytes."""
@@ -44,24 +46,37 @@ class CVService:
             raise ValueError(f"Invalid PDF file: {str(e)}")
 
     def parse_cv_to_structured_data(self, cv_text: str) -> dict:
-        """Use Gemini to extract structured fields from raw CV text."""
-        prompt = f"Extract the candidate's professional profile from this resume text. Be concise.\n\nRESUME TEXT:\n{cv_text}"
+        """Use Groq to extract structured fields from raw CV text."""
+        schema = {
+            "skills": ["string"],
+            "projects": [{"name": "string", "description": "string", "year": "string"}],
+            "years_of_experience": 0,
+            "education": "string"
+        }
+        
+        prompt = f"Extract the candidate's professional profile from this resume text. Return ONLY valid JSON matching this exact structure: {json.dumps(schema)}.\n\nRESUME TEXT:\n{cv_text}"
         
         try:
-            response = self.client.models.generate_content(
+            response = self.groq_client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a CV parser. Always output strictly valid JSON matching the requested schema."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
                 model=self.model,
-                contents=prompt,
-                config={
-                    "response_mime_type": "application/json",
-                    "response_schema": CVExtractionResult,
-                    "temperature": 0.1
-                }
+                response_format={"type": "json_object"},
+                temperature=0.1
             )
-            # Parse the JSON response
-            data = json.loads(response.text)
+            
+            data = json.loads(response.choices[0].message.content)
             return data
         except Exception as e:
-            logger.error(f"Gemini CV extraction failed: {e}")
+            logger.error(f"Groq CV extraction failed: {e}")
             raise RuntimeError("Failed to parse CV with AI")
 
 cv_service = CVService()

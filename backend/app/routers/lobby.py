@@ -65,6 +65,9 @@ async def upload_cv(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail=str(e))
         
     try:
+        # Index the CV into LlamaIndex for RAG (Retrieval-Augmented Generation) during negotiation
+        llamaindex_service.index_pdf_bytes(file_bytes, filename=file.filename)
+        
         structured_data = cv_service.parse_cv_to_structured_data(text)
         return structured_data
     except Exception as e:
