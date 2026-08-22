@@ -1065,8 +1065,9 @@ function NegotiationArena({
   const [isLlamaModalOpen, setIsLlamaModalOpen] = useState(false);
   const [showContract, setShowContract] = useState(false);
   const [centerTab, setCenterTab] = useState<"agents" | "human_chat">("agents");
+  const [isHumanMicActive, setIsHumanMicActive] = useState(true);
   const [humanMessages, setHumanMessages] = useState<Array<{ sender: string; role: string; text: string; timestamp: string }>>([
-    { sender: "System", role: "Room", text: "Secure Direct Human Channel initialized. You can message the other party directly without AI intervention.", timestamp: "Live" }
+    { sender: "DealRoom System", role: "Auditor", text: "🟢 Live Voice Call & Secure Human Chat connected. Both Client and Freelancer can communicate directly while AI agents negotiate terms.", timestamp: "Active" }
   ]);
   const [humanInput, setHumanInput] = useState("");
   const [unreadHumanCount, setUnreadHumanCount] = useState(0);
@@ -1207,10 +1208,35 @@ function NegotiationArena({
 
         {/* Center: Controls + Radar + Transcript */}
         <div style={{ display: "flex", flexDirection: "column", gap: "10px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "14px", overflow: "hidden" }}>
+          {/* Human Voice Call Status Bar */}
+          <div style={{ background: "linear-gradient(90deg, rgba(34,197,94,0.12), rgba(56,189,248,0.08), rgba(192,132,252,0.12))", border: "1px solid rgba(34,197,94,0.3)", borderRadius: "10px", padding: "8px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: isHumanMicActive ? "#22c55e" : "#ef4444", boxShadow: isHumanMicActive ? "0 0 10px #22c55e" : "none", animation: isHumanMicActive ? "pulse 1.5s infinite" : "none" }} />
+              <div>
+                <div style={{ fontSize: "11.5px", fontWeight: 800, color: "#f8fafc", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span>📞 Live Human Voice Call</span>
+                  <span style={{ fontSize: "9.5px", background: "rgba(34,197,94,0.2)", color: "#86efac", padding: "1px 6px", borderRadius: "8px", border: "1px solid rgba(34,197,94,0.4)" }}>HD Audio</span>
+                </div>
+                <span style={{ fontSize: "10px", color: "#94a3b8" }}>Client & Freelancer connected in direct duplex call</span>
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <button onClick={() => setIsHumanMicActive(!isHumanMicActive)} style={{ padding: "5px 12px", borderRadius: "6px", background: isHumanMicActive ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)", border: `1px solid ${isHumanMicActive ? "#22c55e" : "#ef4444"}`, color: isHumanMicActive ? "#86efac" : "#fca5a5", fontSize: "11px", fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
+                {isHumanMicActive ? "🎙️ Mic ON" : "🔇 Mic Muted"}
+              </button>
+              <div style={{ display: "flex", gap: "4px", background: "rgba(255,255,255,0.06)", padding: "3px", borderRadius: "8px" }}>
+                <button onClick={() => { setCenterTab("agents"); setUnreadHumanCount(0); }} style={{ background: centerTab === "agents" ? "#38bdf8" : "transparent", color: centerTab === "agents" ? "#000" : "#94a3b8", border: "none", borderRadius: "6px", padding: "4px 10px", fontSize: "10.5px", fontWeight: 800, cursor: "pointer" }}>🤖 AI Debate</button>
+                <button onClick={() => { setCenterTab("human_chat"); setUnreadHumanCount(0); }} style={{ background: centerTab === "human_chat" ? "#c084fc" : "transparent", color: centerTab === "human_chat" ? "#000" : "#94a3b8", border: "none", borderRadius: "6px", padding: "4px 10px", fontSize: "10.5px", fontWeight: 800, cursor: "pointer", position: "relative" }}>
+                  💬 Human Chat {unreadHumanCount > 0 && <span style={{ position: "absolute", top: "-4px", right: "-4px", background: "#ef4444", color: "#fff", fontSize: "9px", borderRadius: "10px", padding: "1px 5px", fontWeight: 900 }}>{unreadHumanCount}</span>}
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: "4px", background: "rgba(255,255,255,0.04)", padding: "3px 6px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)" }}>
               <button type="button" onClick={() => setIsFlightMode(false)} style={{ background: !isFlightMode ? "#fff" : "transparent", color: !isFlightMode ? "#000" : "#94a3b8", border: "none", borderRadius: "5px", padding: "4px 10px", fontSize: "11px", fontWeight: 800, cursor: "pointer" }}>🤖 Autonomous AI</button>
-              <button type="button" onClick={() => setIsFlightMode(true)} style={{ background: isFlightMode ? "#38bdf8" : "transparent", color: isFlightMode ? "#000" : "#94a3b8", border: "none", borderRadius: "5px", padding: "4px 10px", fontSize: "11px", fontWeight: 800, cursor: "pointer" }}>🥊 Voice Flight Sim</button>
+              <button type="button" onClick={() => setIsFlightMode(true)} style={{ background: isFlightMode ? "#38bdf8" : "transparent", color: isFlightMode ? "#000" : "#94a3b8", border: "none", borderRadius: "5px", padding: "4px 10px", fontSize: "11px", fontWeight: 800, cursor: "pointer" }}>🥊 Flight Sim</button>
             </div>
             {!isComplete && (
               <div style={{ display: "flex", gap: "6px" }}>
