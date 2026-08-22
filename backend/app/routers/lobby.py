@@ -115,6 +115,24 @@ async def list_active_freelancers(job_description: Optional[str] = None):
     return {"freelancers": freelancers, "count": len(freelancers)}
 
 
+
+@router.get("/freelancer/{user_id}")
+async def get_freelancer_profile(user_id: str):
+    """Fetch a specific registered freelancer profile by ID."""
+    fl = matchmaking.get_freelancer(user_id)
+    if not fl:
+        raise HTTPException(status_code=404, detail="Freelancer profile not found")
+    return fl
+
+
+@router.get("/client/{user_id}")
+async def get_client_profile(user_id: str):
+    """Fetch a specific registered client profile by ID."""
+    cl = matchmaking.get_client(user_id)
+    if not cl:
+        raise HTTPException(status_code=404, detail="Client profile not found")
+    return cl
+
 @router.get("/clients")
 async def list_active_clients():
     """List all currently active client profiles."""

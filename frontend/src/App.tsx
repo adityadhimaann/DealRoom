@@ -32,6 +32,8 @@ import {
   registerFreelancer,
   registerClient,
   getActiveFreelancers,
+  getFreelancerProfile,
+  getClientProfile,
   sendDealInvite,
   acceptInvite,
   declineInvite,
@@ -116,15 +118,53 @@ function RoleSelectScreen({ onSelectRole }: { onSelectRole: (role: "freelancer" 
     }
   };
 
-  const flName = getStorageItem("dr_fl_name") || "";
-  const flRole = getStorageItem("dr_fl_role") || "";
-  const flActive = Boolean(getStorageItem("dr_fl_active"));
-  const flUid = getStorageItem("dr_fl_uid") || "";
+  const [flState, setFlState] = useState({
+    name: getStorageItem("dr_fl_name") || "",
+    role: getStorageItem("dr_fl_role") || "",
+    active: Boolean(getStorageItem("dr_fl_active")),
+    uid: getStorageItem("dr_fl_uid") || ""
+  });
 
-  const clName = getStorageItem("dr_cl_name") || "";
-  const clCompany = getStorageItem("dr_cl_comp") || "";
-  const clRegistered = Boolean(getStorageItem("dr_cl_registered"));
-  const clUid = getStorageItem("dr_cl_uid") || "";
+  const [clState, setClState] = useState({
+    name: getStorageItem("dr_cl_name") || "",
+    company: getStorageItem("dr_cl_comp") || "",
+    registered: Boolean(getStorageItem("dr_cl_registered")),
+    uid: getStorageItem("dr_cl_uid") || ""
+  });
+
+  // Sync with backend on mount
+  useEffect(() => {
+    getActiveFreelancers().then(res => {
+      const list = res.freelancers || [];
+      if (flState.uid) {
+        const found = list.find(f => f.user_id === flState.uid);
+        if (found) {
+          setFlState({ name: found.display_name, role: found.role_title, active: true, uid: found.user_id });
+          localStorage.setItem("dr_fl_name", JSON.stringify(found.display_name));
+          localStorage.setItem("dr_fl_role", JSON.stringify(found.role_title));
+          localStorage.setItem("dr_fl_active", JSON.stringify(true));
+        }
+      } else if (list.length > 0) {
+        // Recover latest registered freelancer if local was cleared
+        const latest = list[list.length - 1];
+        setFlState({ name: latest.display_name, role: latest.role_title, active: true, uid: latest.user_id });
+        localStorage.setItem("dr_fl_name", JSON.stringify(latest.display_name));
+        localStorage.setItem("dr_fl_role", JSON.stringify(latest.role_title));
+        localStorage.setItem("dr_fl_active", JSON.stringify(true));
+        localStorage.setItem("dr_fl_uid", JSON.stringify(latest.user_id));
+      }
+    }).catch(() => {});
+  }, []);
+
+  const flName = flState.name;
+  const flRole = flState.role;
+  const flActive = flState.active;
+  const flUid = flState.uid;
+
+  const clName = clState.name;
+  const clCompany = clState.company;
+  const clRegistered = clState.registered;
+  const clUid = clState.uid;
 
   return (
     <div style={{

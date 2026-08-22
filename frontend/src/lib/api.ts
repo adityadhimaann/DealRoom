@@ -233,3 +233,15 @@ export async function declineInvite(inviteId: string): Promise<any> {
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
+
+export async function getFreelancerProfile(userId: string): Promise<FreelancerProfile> {
+  const res = await fetch(`${API_BASE}/lobby/freelancer/${userId}`);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function getClientProfile(userId: string): Promise<any> {
+  const res = await fetch(`${API_BASE}/lobby/client/${userId}`);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
