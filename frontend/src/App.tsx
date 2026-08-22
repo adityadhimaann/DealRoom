@@ -935,7 +935,7 @@ function ClientLobby({ onDealAccepted, onBack }: {
         </div>
       </div>
 
-      <div style={{ flex: 1, display: "flex", gap: "20px", marginTop: "16px", overflow: "hidden" }}>
+      <div className="mobile-stack" style={{ flex: 1, display: "flex", gap: "20px", marginTop: "16px", overflow: "hidden" }}>
         {/* Left: Job Posting Form */}
         <div style={{ width: "380px", display: "flex", flexDirection: "column", gap: "10px", background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "16px", overflowY: "auto" }}>
           
@@ -1261,7 +1261,7 @@ function NegotiationArena({
       </div>
 
       {/* 3-Column Arena */}
-      <div style={{ display: "grid", gridTemplateColumns: "310px 1fr 310px", gap: "14px", flex: 1, overflow: "hidden", marginTop: "12px" }}>
+      <div className="arena-grid" style={{ display: "grid", gridTemplateColumns: "310px 1fr 310px", gap: "14px", flex: 1, overflow: "hidden", marginTop: "12px" }}>
         {/* Left: Agent A */}
         <div style={{ display: "flex", flexDirection: "column", gap: "10px", background: speakingAgent === "A" ? "rgba(192,132,252,0.04)" : "rgba(255,255,255,0.02)", border: `1px solid ${speakingAgent === "A" ? "#c084fc" : "rgba(255,255,255,0.08)"}`, boxShadow: speakingAgent === "A" ? "0 0 35px rgba(192,132,252,0.25)" : "none", borderRadius: "14px", padding: "14px", overflowY: "auto", transition: "all 0.3s ease" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
