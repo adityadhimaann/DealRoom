@@ -77,8 +77,8 @@ class StrategicDecisionEngine:
         if last_opponent_offer is not None:
             if agent == "A":
                 if last_opponent_offer >= seller_floor:
-                    # Require at least 6 turns for thorough negotiation, or ideal target match on turn >= 4
-                    if turn_num >= 6 or (turn_num >= 4 and last_opponent_offer >= ideal_price):
+                    # Require at least 8 turns for thorough project & technical debate, or exact target match on turn >= 6
+                    if turn_num >= 8 or (turn_num >= 6 and last_opponent_offer >= ideal_price):
                         return {
                             "action": "ACCEPT",
                             "offer_amount": last_opponent_offer,
@@ -87,13 +87,13 @@ class StrategicDecisionEngine:
                             "is_final": True,
                             "tactical_phase": "Surplus Agreement",
                             "trade_off_lever": "Milestone Escrow Released",
-                            "strategic_reasoning": f"Opponent offer of {currency}{last_opponent_offer:,.0f} meets Pareto surplus floor ({currency}{seller_floor:,.0f}). Locked consensus after thorough dialogue.",
+                            "strategic_reasoning": f"Opponent offer of {currency}{last_opponent_offer:,.0f} meets Pareto surplus floor ({currency}{seller_floor:,.0f}). Locked consensus after thorough technical dialogue.",
                             "confidence": 0.98
                         }
             else:
                 if last_opponent_offer <= buyer_ceiling:
-                    # Require at least 6 turns for thorough negotiation, or ideal target match on turn >= 4
-                    if turn_num >= 6 or (turn_num >= 4 and last_opponent_offer <= ideal_price):
+                    # Require at least 8 turns for thorough project & technical debate, or exact target match on turn >= 6
+                    if turn_num >= 8 or (turn_num >= 6 and last_opponent_offer <= ideal_price):
                         return {
                             "action": "ACCEPT",
                             "offer_amount": last_opponent_offer,
@@ -102,7 +102,7 @@ class StrategicDecisionEngine:
                             "is_final": True,
                             "tactical_phase": "Surplus Agreement",
                             "trade_off_lever": "Standard 2-Sprint Release",
-                            "strategic_reasoning": f"Seller ask of {currency}{last_opponent_offer:,.0f} is within budget ceiling ({currency}{buyer_ceiling:,.0f}). Contract accepted after thorough dialogue.",
+                            "strategic_reasoning": f"Seller ask of {currency}{last_opponent_offer:,.0f} is within budget ceiling ({currency}{buyer_ceiling:,.0f}). Contract accepted after thorough technical dialogue.",
                             "confidence": 0.98
                         }
 

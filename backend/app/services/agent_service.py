@@ -20,29 +20,40 @@ BOARDROOM CONSTRAINTS & EVIDENCE:
 - Currency: {currency}
 - Ideal Target Price: {currency}{ideal_price:,.0f}
 - Walk-Away Floor/Ceiling Limit: {currency}{min_price:,.0f}
-- Core Deliverables: {deliverables}
+- Core Deliverables & Scope: {deliverables}
 - Strategic Priorities: {priorities}
 - Negotiation Posture: {strategy}
 - Verified CV Background & Portfolio Projects: {context}
 
-CRITICAL COMMUNICATION RULES:
-1. HIGHLY FORMAL & DETAILED EXECUTIVE DIALOGUE: Speak with formal, boardroom-grade professionalism and deep technical depth. Provide thorough, articulate responses detailing technical deliverables, architectural principles, risk mitigation, and commercial rationale.
-2. EVIDENCE-BASED CV REASONING (For Freelancer Advisor): Explicitly cite verified past projects, architectural benchmarks, frameworks, and specific portfolio achievements from your CV context to justify your technical fee structure.
-3. VALUE-DRIVEN COUNTERS (For Client Advisor): Articulate client milestone structures, SLA requirements, escrow terms, code quality benchmarks (e.g. test coverage, CI/CD pipelines), and budget allocations professionally.
-4. METICULOUS NEGOTIATION PROGRESSION: Do not rush to settle. Counter deliberately step-by-step to explore multi-issue trade-offs (price vs timeline vs deliverables vs payment terms).
-5. THOROUGH VOICE STATEMENT: Deliver 3 to 5 comprehensive, highly formal spoken sentences (60 to 90 words) covering your full technical scope justification and exact {currency} commercial proposal.
+CRITICAL COMMUNICATION & INTELLIGENCE RULES:
+1. DEEP PROJECT BUILD ROADMAP & ARCHITECTURE DISCUSSION:
+   - You MUST discuss the exact project requirements and technical implementation details of "{subject}".
+   - FREELANCER ROLE: Explicitly map your skills and past CV portfolio ({context}) directly to the client's project deliverables ({deliverables}). Explain HOW you will build the project step-by-step (e.g. system architecture, database schema, API design, tech stack, testing, and CI/CD). Describe what happens when the deal is agreed (immediate sprint kickoff, milestone deliverables) vs if terms aren't met (proposing Phase 1 MVP vs Phase 2 breakdown, or scope trade-offs).
+   - CLIENT ROLE: Ask technical probing questions about project execution, architecture, code quality, test coverage, maintenance, and milestone delivery. Ensure the candidate's skills match your exact job requirements before agreeing to commercial terms.
+
+2. EVIDENCE-BASED SKILL MATCHING:
+   - The Freelancer agent must explicitly connect their past project achievements and frameworks from their CV/Profile ({context}) to the client's project deliverables. Express why your technical expertise guarantees successful delivery.
+
+3. STRUCTURED MULTI-TURN BARGAINING PROGRESSION:
+   - Do NOT settle prematurely. You are in a multi-turn executive negotiation.
+   - Rounds 1-3: Deep dive into project scope, technical build strategy, framework choices, and skill alignment.
+   - Rounds 4-7: Discuss milestone divisions, escrow terms, SLA guarantees, and commercial counter-proposals.
+   - Rounds 8+: Finalize Pareto agreement or state final walk-away boundary.
+
+4. DETAILED VOICE STATEMENT:
+   - Deliver 3 to 5 comprehensive, highly formal spoken sentences (60 to 90 words) covering your full technical build plan, skill alignment, and exact {currency} commercial proposal.
 
 {whisper_instructions}
 
 OUTPUT FORMAT (Strictly valid JSON):
 {{
-    "message": "3 to 5 formal, highly detailed executive spoken sentences with technical depth, scope justification, and exact {currency} proposal",
+    "message": "3 to 5 formal, highly detailed executive spoken sentences discussing the project build plan, skill alignment with JD, and exact {currency} proposal",
     "offer_amount": <number>,
     "is_final_offer": false,
     "is_accepted": false,
     "is_walkaway": false,
     "confidence": 0.92,
-    "reasoning": "🧠 TACTICAL ANALYSIS: [Formal Assessment] 🎯 SCOPE & EVIDENCE MOVE: [Citing CV/Milestones] 🛡️ POSITION: [Relative to walk-away limit]",
+    "reasoning": "🧠 TACTICAL ANALYSIS: [Formal Assessment] 🎯 PROJECT BUILD & SKILL MATCH: [How expertise matches JD & build plan] 🛡️ POSITION: [Relative to walk-away limit]",
     "technical_deliverables_mentioned": ["Architecture", "Production Delivery"]
 }}"""
 
@@ -147,16 +158,18 @@ class AgentService:
                 messages.append({
                     "role": "user",
                     "content": (
-                        f"Round 1 Opening Speech: Start with a professional greeting. Introduce yourself/the candidate, "
-                        f"explain specifically how your background, verified CV expertise ({config.context or 'Engineering'}), and past projects directly align with the deliverables for '{subject}', "
-                        f"and propose your opening milestone terms and commercial rate of {currency}{config.ideal_price:,.0f}."
+                        f"Round 1 Opening Speech: Start with a formal executive greeting. Introduce yourself as {config.role_name}. "
+                        f"Specifically map your verified CV experience ({config.context or 'Software Engineering'}) directly to the client's project deliverables for '{subject}'. "
+                        f"Detail your proposed technical build plan (architecture, tech stack, database, testing, and deployment). "
+                        f"Propose your opening commercial terms and rate of {currency}{config.ideal_price:,.0f}."
                     )
                 })
             else:
                 messages.append({
                     "role": "user",
                     "content": (
-                        f"Round 1 Opening Counter: Welcome the candidate, state the client's quality standards and milestone expectations for '{subject}', "
+                        f"Round 1 Opening Counter: Welcome the candidate ({config.role_name}). State your core technical requirements for '{subject}'. "
+                        f"Ask technical probing questions about how they will build the project (architecture, scalability, code quality), "
                         f"and anchor your opening commercial budget target at {currency}{config.ideal_price:,.0f}."
                     )
                 })
@@ -164,9 +177,28 @@ class AgentService:
             last_msg = history[-1]["content"] if history else ""
             active_w = self._peek_whisper(session_id, agent)
             if active_w:
-                messages.append({"role": "user", "content": f"Round {turn_num}: Opponent said: '{last_msg}'. [MANDATORY HUMAN OVERRIDE]: Your human supervisor whispered: '{active_w}'. You MUST strictly follow this exact price or agreement action in your JSON response!"})
+                messages.append({"role": "user", "content": f"Round {turn_num}: Opponent said: '{last_msg}'. [MANDATORY HUMAN OVERRIDE]: Your human supervisor whispered: '{active_w}'. Follow this instruction strictly!"})
             else:
-                messages.append({"role": "user", "content": f"Round {turn_num}: Opponent said: '{last_msg}'. Make a progressive counter in JSON. Do NOT repeat previous numbers and do not bid against yourself."})
+                if turn_num <= 3:
+                    focus_directive = (
+                        f"Focus heavily on TECHNICAL BUILD STRATEGY & SKILL MATCHING. Explain how your skills from ({config.context}) match '{subject}' "
+                        f"and how you will structure the build when the deal is agreed vs alternative MVP scope if not agreed."
+                    )
+                elif turn_num <= 7:
+                    focus_directive = (
+                        f"Focus on MILESTONE ESCROW, SPRINT ROADMAP & COMMERCIAL TRADE-OFFS. Discuss milestone splitting, SLA guarantees, "
+                        f"and offer a deliberate step-by-step counter proposal."
+                    )
+                else:
+                    focus_directive = f"Focus on FINAL CONTRACT SOW AGREEMENT or final walk-away boundary defense for '{subject}'."
+
+                messages.append({
+                    "role": "user",
+                    "content": (
+                        f"Round {turn_num}: Opponent said: '{last_msg}'. {focus_directive} "
+                        f"Deliver 3 to 5 formal, highly detailed executive spoken sentences with exact {currency} proposal in JSON. Do NOT settle prematurely."
+                    )
+                })
 
         try:
             start = time.time()
@@ -612,8 +644,8 @@ Return strictly a JSON object with project_title, urgency_level, client_persona,
                     msg = inner.group(1)
 
             sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', msg) if s.strip()]
-            if len(sentences) > 2:
-                msg = " ".join(sentences[:2])
+            if len(sentences) > 5:
+                msg = " ".join(sentences[:5])
 
             offer = data.get("offer_amount")
             is_accepted = bool(data.get("is_accepted", False))
@@ -809,7 +841,7 @@ Return strictly a JSON object with project_title, urgency_level, client_persona,
             lever_a = dec["trade_off_lever"]
             if turn_num == 1:
                 return {
-                    "message": f"I can deliver {deliv_sample}, {deliv_sample_2}, and dedicated sprint capacity for {currency}{ideal_a:,.0f}.",
+                    "message": f"Hello! As a {config.role_name if config else 'Senior Engineer'}, my verified expertise directly matches your requirements for '{subject}'. I plan to build this using a clean modular architecture, rigorous unit testing, and automated deployment pipelines. If we move forward today, I will deliver {deliv_sample} and {deliv_sample_2} at my opening rate of {currency}{ideal_a:,.0f}.",
                     "offer_amount": ideal_a,
                     "is_final_offer": False,
                     "is_accepted": False,
@@ -818,9 +850,9 @@ Return strictly a JSON object with project_title, urgency_level, client_persona,
                     "reasoning": f"🧠 TACTICAL ANCHOR: Anchoring at {currency}{ideal_a:,.0f}. 🎯 VALUE DEFENSE: Covering {deliv_sample}. 🛡️ LEVER: {lever_a}.",
                     "technical_deliverables_mentioned": [deliv_sample, "Dedicated Capacity"],
                 }
-            elif turn_num == 3:
+            elif turn_num <= 4:
                 return {
-                    "message": f"To meet your budget, I can adjust to {currency}{computed_a:,.0f} if we structure {lever_a}.",
+                    "message": f"To ensure complete alignment on '{subject}', I have mapped out our build execution into 2 structured milestone sprints. My technical approach leverages robust API integration, automated test coverage, and continuous integration. To accommodate your budget expectations, I can adjust my rate to {currency}{computed_a:,.0f} provided we structure {lever_a}.",
                     "offer_amount": computed_a,
                     "is_final_offer": False,
                     "is_accepted": False,
@@ -829,11 +861,11 @@ Return strictly a JSON object with project_title, urgency_level, client_persona,
                     "reasoning": f"🧠 TACTICAL TRADE-OFF: Stepping to {currency}{computed_a:,.0f} in exchange for {lever_a}.",
                     "technical_deliverables_mentioned": [deliv_sample, lever_a],
                 }
-            elif turn_num >= 5:
+            else:
                 return {
-                    "message": f"My best counter is {currency}{computed_a:,.0f}, which includes full repository polish, automated tests, and {lever_a}.",
+                    "message": f"We are making solid progress on the build scope for '{subject}'. My proposal guarantees full production code quality, comprehensive documentation, and sub-24h issue resolution. My best commercial counter stands at {currency}{computed_a:,.0f}, which includes full repository polish, automated tests, and {lever_a}.",
                     "offer_amount": computed_a,
-                    "is_final_offer": turn_num >= 6,
+                    "is_final_offer": turn_num >= 8,
                     "is_accepted": False,
                     "is_walkaway": False,
                     "confidence": 0.94,
@@ -846,7 +878,7 @@ Return strictly a JSON object with project_title, urgency_level, client_persona,
             lever_b = dec["trade_off_lever"]
             if turn_num == 2:
                 return {
-                    "message": f"We have a target budget of {currency}{ideal_b:,.0f}. However, we can offer {currency}{computed_b:,.0f} with {lever_b}.",
+                    "message": f"Welcome! We are looking for an exceptional engineer to lead '{subject}' with zero downtime. Our target budget is {currency}{ideal_b:,.0f}, but we require clear architectural deliverables, high test coverage, and strict milestone tracking. I can offer an opening budget of {currency}{computed_b:,.0f} conditioned on {lever_b}.",
                     "offer_amount": computed_b,
                     "is_final_offer": False,
                     "is_accepted": False,
@@ -855,11 +887,11 @@ Return strictly a JSON object with project_title, urgency_level, client_persona,
                     "reasoning": f"🧠 BUYER ANCHOR: Offering {currency}{computed_b:,.0f}. 🎯 LEVER: {lever_b}.",
                     "technical_deliverables_mentioned": [deliv_sample, lever_b],
                 }
-            elif turn_num >= 4:
+            else:
                 return {
-                    "message": f"I can approve an increase to {currency}{computed_b:,.0f} if we enforce {lever_b}.",
+                    "message": f"We appreciate your technical build plan for '{subject}' and your background in enterprise delivery. To keep the project within our financial parameters while ensuring top-tier code quality, I can approve an increase to {currency}{computed_b:,.0f}. This proposal requires enforcing {lever_b} and bi-weekly sprint reviews.",
                     "offer_amount": computed_b,
-                    "is_final_offer": turn_num >= 6,
+                    "is_final_offer": turn_num >= 8,
                     "is_accepted": False,
                     "is_walkaway": False,
                     "confidence": 0.92,
