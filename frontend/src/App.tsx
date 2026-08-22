@@ -203,6 +203,7 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
   const [isRegistering, setIsRegistering] = useState(false);
   const [pendingInvite, setPendingInvite] = useState<DealInvite | null>(null);
   const [isAccepting, setIsAccepting] = useState(false);
+  const isAcceptingRef = useRef(false);
   const wsRef = useRef<WebSocket | null>(null);
 
   const handleGoActive = async () => {
@@ -240,13 +241,19 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
   };
 
   const handleAcceptInvite = async () => {
-    if (!pendingInvite || !userId) return;
+    if (!pendingInvite || !userId || isAcceptingRef.current) return;
+    isAcceptingRef.current = true;
     setIsAccepting(true);
     try {
       await acceptInvite(pendingInvite.invite_id);
       onDealAccepted(pendingInvite, userId);
     } catch (err: any) {
-      alert("Failed to accept: " + err.message);
+      if (err.message && err.message.includes("already responded")) {
+        onDealAccepted(pendingInvite, userId);
+      } else {
+        alert("Failed to accept: " + err.message);
+        isAcceptingRef.current = false;
+      }
     } finally {
       setIsAccepting(false);
     }
