@@ -7,10 +7,10 @@ import logging
 import time
 from typing import Optional, Tuple, List
 import httpx
-from bs4 import BeautifulSoup
-from google import genai
-from groq import Groq
-import pypdf
+from bs4 import BeautifulSoup  # type: ignore
+from google import genai  # type: ignore
+from groq import Groq  # type: ignore
+import pypdf  # type: ignore
 
 logger = logging.getLogger(__name__)
 
