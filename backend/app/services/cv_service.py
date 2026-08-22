@@ -3,27 +3,12 @@ import logging
 import io
 import json
 import pypdf
-from google import genai
-from pydantic import BaseModel, Field
-from typing import List
+from groq import Groq
+import os
 
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
-
-class CVProjectExtracted(BaseModel):
-    name: str = Field(description="Name of the project or employer")
-    description: str = Field(description="Brief 1-2 sentence description of what was built or achieved")
-    year: str = Field(description="Year or date range")
-
-class CVExtractionResult(BaseModel):
-    skills: List[str] = Field(description="List of technical skills and tools")
-    projects: List[CVProjectExtracted] = Field(description="List of relevant projects or work experiences")
-    years_of_experience: int = Field(description="Estimated total years of professional experience")
-    education: str = Field(description="Highest degree or relevant education")
-
-from groq import Groq
-import os
 
 class CVService:
     def __init__(self):
@@ -46,22 +31,40 @@ class CVService:
             raise ValueError(f"Invalid PDF file: {str(e)}")
 
     def parse_cv_to_structured_data(self, cv_text: str) -> dict:
-        """Use Groq to extract structured fields from raw CV text."""
+        """Use Groq to extract rich structured fields from raw CV text."""
         schema = {
-            "skills": ["string"],
-            "projects": [{"name": "string", "description": "string", "year": "string"}],
-            "years_of_experience": 0,
-            "education": "string"
+            "name": "Full Name",
+            "role_title": "Primary Professional Role / Headline",
+            "skills": ["Skill 1", "Skill 2"],
+            "years_of_experience": 5,
+            "education": "University / Degree",
+            "min_rate": 6000,
+            "max_rate": 18000,
+            "summary": "Detailed, highly articulate 3-5 paragraph technical summary covering background, key achievements, major projects, and domain expertise suitable for a client proposal."
         }
         
-        prompt = f"Extract the candidate's professional profile from this resume text. Return ONLY valid JSON matching this exact structure: {json.dumps(schema)}.\n\nRESUME TEXT:\n{cv_text}"
+        prompt = f"""You are an elite technical executive recruiter and profile synthesizer.
+Analyze the following resume and extract all relevant candidate information into a comprehensive structured JSON profile.
+
+RESUME TEXT:
+{cv_text}
+
+OUTPUT INSTRUCTIONS:
+- Extract candidate's full 'name'.
+- Synthesize an impressive 'role_title' (e.g. "Senior Full-Stack & Distributed Systems Architect").
+- List top 8-12 core 'skills'.
+- Estimate realistic 'min_rate' and 'max_rate' in USD based on seniority and experience level (e.g. 5000 to 18000).
+- Generate a rich, multi-paragraph 'summary' highlighting their core strengths, key architecture projects, and demonstrable technical impact.
+
+Return ONLY a strictly valid JSON object matching this schema:
+{json.dumps(schema, indent=2)}"""
         
         try:
             response = self.groq_client.chat.completions.create(
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are a CV parser. Always output strictly valid JSON matching the requested schema."
+                        "content": "You are an expert resume parser. Always output strictly valid JSON matching the requested schema."
                     },
                     {
                         "role": "user",
