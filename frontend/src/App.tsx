@@ -512,6 +512,34 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
           )}
         </div>
       </div>
+      {/* Incoming Deal Call Modal */}
+      {acceptedInviteForCall && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(14px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+          <div style={{ background: "#0c1017", border: "1px solid rgba(56,189,248,0.5)", boxShadow: "0 0 60px rgba(56,189,248,0.3)", borderRadius: "18px", padding: "30px", maxWidth: "480px", width: "100%", textAlign: "center" }}>
+            <div style={{ width: "68px", height: "68px", borderRadius: "50%", background: "rgba(74,222,128,0.15)", border: "2px solid #4ade80", margin: "0 auto 16px auto", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "30px", boxShadow: "0 0 30px rgba(74,222,128,0.3)" }}>
+              📞
+            </div>
+            <span style={{ fontSize: "10.5px", fontWeight: 800, padding: "3px 10px", borderRadius: "20px", background: "rgba(74,222,128,0.15)", color: "#4ade80", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              Deal Invitation Accepted
+            </span>
+            <h3 style={{ fontSize: "22px", fontWeight: 900, color: "#fff", margin: "12px 0 6px 0" }}>
+              Freelancer Ready to Connect!
+            </h3>
+            <p style={{ fontSize: "13px", color: "#94a3b8", margin: "0 0 24px 0", lineHeight: 1.5 }}>
+              The candidate has reviewed your job requirements and accepted the invitation. Join the live Deal Call now to start autonomous AI agent voice negotiation.
+            </p>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button onClick={() => {
+                const inv = acceptedInviteForCall;
+                setAcceptedInviteForCall(null);
+                onDealAccepted(inv, userId!);
+              }} style={{ flex: 1, padding: "14px", borderRadius: "12px", background: "linear-gradient(135deg, #38bdf8, #22c55e)", color: "#000", border: "none", fontWeight: 900, fontSize: "13.5px", cursor: "pointer", boxShadow: "0 4px 20px rgba(34,197,94,0.4)", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                <span>📞 Join Live Deal Call & Enter DealRoom →</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1326,37 +1354,7 @@ export default function App() {
     return <NegotiationArena sessionId={sessionId} setup={setup} onReset={handleReset} />;
   }
 
-  return <RoleSelectScreen onSelectRole={handleRoleSelect}
-      {/* Incoming Deal Call Modal */}
-      {acceptedInviteForCall && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(14px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
-          <div style={{ background: "#0c1017", border: "1px solid rgba(56,189,248,0.5)", boxShadow: "0 0 60px rgba(56,189,248,0.3)", borderRadius: "18px", padding: "30px", maxWidth: "480px", width: "100%", textAlign: "center" }}>
-            <div style={{ width: "68px", height: "68px", borderRadius: "50%", background: "rgba(74,222,128,0.15)", border: "2px solid #4ade80", margin: "0 auto 16px auto", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "30px", boxShadow: "0 0 30px rgba(74,222,128,0.3)" }}>
-              📞
-            </div>
-            <span style={{ fontSize: "10.5px", fontWeight: 800, padding: "3px 10px", borderRadius: "20px", background: "rgba(74,222,128,0.15)", color: "#4ade80", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-              Deal Invitation Accepted
-            </span>
-            <h3 style={{ fontSize: "22px", fontWeight: 900, color: "#fff", margin: "12px 0 6px 0" }}>
-              Freelancer Ready to Connect!
-            </h3>
-            <p style={{ fontSize: "13px", color: "#94a3b8", margin: "0 0 24px 0", lineHeight: 1.5 }}>
-              The candidate has reviewed your job requirements and accepted the invitation. Join the live Deal Call now to start autonomous AI agent voice negotiation.
-            </p>
-            <div style={{ display: "flex", gap: "10px" }}>
-              <button onClick={() => {
-                const inv = acceptedInviteForCall;
-                setAcceptedInviteForCall(null);
-                onDealAccepted(inv, userId!);
-              }} style={{ flex: 1, padding: "14px", borderRadius: "12px", background: "linear-gradient(135deg, #38bdf8, #22c55e)", color: "#000", border: "none", fontWeight: 900, fontSize: "13.5px", cursor: "pointer", boxShadow: "0 4px 20px rgba(34,197,94,0.4)", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-                <span>📞 Join Live Deal Call & Enter DealRoom →</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+  return <RoleSelectScreen onSelectRole={handleRoleSelect} />;
 }
 
 
