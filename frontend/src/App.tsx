@@ -653,63 +653,111 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
         <div className="lobby-sidebar" style={{ width: "420px", display: "flex", flexDirection: "column", gap: "12px", background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "18px", overflowY: "auto" }}>
           
           {/* AI CV Upload */}
-          <div style={{ background: "linear-gradient(135deg, rgba(56,189,248,0.1), rgba(192,132,252,0.1))", border: "1px solid rgba(192,132,252,0.4)", borderRadius: "12px", padding: "16px", textAlign: "center", cursor: "pointer", transition: "0.2s" }} onClick={() => fileInputRef.current?.click()}>
-            <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".pdf" style={{ display: 'none' }} />
-            <DocIcon size={24} />
-            <h3 style={{ margin: "6px 0 3px 0", fontSize: "14px", color: "#c084fc" }}>AI CV Intelligence</h3>
-            <p style={{ margin: 0, fontSize: "11px", color: "rgba(255,255,255,0.7)" }}>
-              {isUploading ? "Extracting intelligence with Gemini 2.5 Flash..." : "Upload your PDF CV to auto-fill your profile."}
-            </p>
-          </div>
-
-          <span style={{ fontSize: "10.5px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.8px", marginTop: "8px" }}>Your Freelancer Profile</span>
-          
-          {[
-            { label: "Display Name", value: displayName, set: setDisplayName, ph: "e.g. Aditya Dhiman" },
-            { label: "Role / Title", value: roleTitle, set: setRoleTitle, ph: "e.g. Senior React & Cloud Architect" },
-            { label: "Skills (comma-separated)", value: skillsText, set: setSkillsText, ph: "React, Node.js, AWS, Python, Kubernetes" },
-          ].map(({ label, value, set, ph }) => (
-            <div key={label} style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-              <label style={{ fontSize: "10px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.6px" }}>{label}</label>
-              <input
-                value={value} onChange={(e) => set(e.target.value)} placeholder={ph}
-                disabled={isActive}
-                style={{ padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#f8fafc", fontSize: "12.5px", outline: "none" }}
-              />
-            </div>
-          ))}
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-              <label style={{ fontSize: "10px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase" }}>Min Rate ({currency})</label>
-              <input type="number" value={minRate} onChange={(e) => setMinRate(Number(e.target.value))} disabled={isActive}
-                style={{ padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#f8fafc", fontSize: "12.5px", outline: "none" }} />
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-              <label style={{ fontSize: "10px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase" }}>Max Rate ({currency})</label>
-              <input type="number" value={maxRate} onChange={(e) => setMaxRate(Number(e.target.value))} disabled={isActive}
-                style={{ padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#f8fafc", fontSize: "12.5px", outline: "none" }} />
-            </div>
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-            <label style={{ fontSize: "10px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase" }}>Job / SOW / Portfolio Summary</label>
-            <textarea value={jobText} onChange={(e) => setJobText(e.target.value)} placeholder="Paste your SOW, past project brief, or expertise summary..." disabled={isActive}
-              style={{ padding: "10px 12px", minHeight: "120px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#f8fafc", fontSize: "12px", lineHeight: 1.5, outline: "none", resize: "vertical", fontFamily: "inherit" }} />
-          </div>
-
           {!isActive && (
-            <button onClick={handleGoActive} disabled={isRegistering || !displayName.trim() || !roleTitle.trim()}
-              style={{ marginTop: "6px", padding: "12px", borderRadius: "10px", background: "#c084fc", color: "#000", border: "none", fontWeight: 900, fontSize: "13px", cursor: isRegistering ? "wait" : "pointer", boxShadow: "0 4px 20px rgba(192,132,252,0.3)" }}>
-              {isRegistering ? "Registering..." : "🚀 Go Active — Join Matchmaking Pool"}
-            </button>
+            <div style={{ background: "linear-gradient(135deg, rgba(56,189,248,0.1), rgba(192,132,252,0.1))", border: "1px solid rgba(192,132,252,0.4)", borderRadius: "12px", padding: "16px", textAlign: "center", cursor: "pointer", transition: "0.2s" }} onClick={() => fileInputRef.current?.click()}>
+              <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".pdf" style={{ display: 'none' }} />
+              <DocIcon size={24} />
+              <h3 style={{ margin: "6px 0 3px 0", fontSize: "14px", color: "#c084fc" }}>AI CV Intelligence</h3>
+              <p style={{ margin: 0, fontSize: "11px", color: "rgba(255,255,255,0.7)" }}>
+                {isUploading ? "Extracting intelligence with Gemini 2.5 Flash..." : "Upload your PDF CV to auto-fill your profile."}
+              </p>
+            </div>
           )}
 
-          {isActive && (
-            <div style={{ marginTop: "6px", padding: "12px", borderRadius: "10px", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)", textAlign: "center" }}>
-              <span style={{ fontSize: "12px", fontWeight: 800, color: "#4ade80" }}>✓ YOU ARE ACTIVE</span>
-              <p style={{ fontSize: "11px", color: "#94a3b8", margin: "4px 0 0 0" }}>ID: {userId} — Visible to all clients</p>
+          {isActive ? (
+            /* Dedicated Registered Freelancer Profile Card */
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", background: "linear-gradient(135deg, rgba(192,132,252,0.08), rgba(15,23,42,0.85))", border: "1px solid rgba(192,132,252,0.35)", borderRadius: "14px", padding: "18px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <div style={{ width: "42px", height: "42px", borderRadius: "10px", background: "rgba(192,132,252,0.2)", border: "1px solid #c084fc", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", fontWeight: 900, color: "#c084fc" }}>
+                    {displayName ? displayName.charAt(0).toUpperCase() : "F"}
+                  </div>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 800, color: "#ffffff" }}>{displayName}</h3>
+                    <span style={{ fontSize: "11.5px", color: "#c084fc", fontWeight: 700 }}>{roleTitle}</span>
+                  </div>
+                </div>
+                <span style={{ fontSize: "10px", fontWeight: 800, padding: "4px 9px", borderRadius: "12px", background: "rgba(74,222,128,0.15)", border: "1px solid rgba(74,222,128,0.3)", color: "#4ade80", letterSpacing: "0.5px" }}>
+                  🟢 LIVE IN POOL
+                </span>
+              </div>
+
+              <div style={{ background: "rgba(255,255,255,0.03)", padding: "10px 12px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: "10.5px", color: "#94a3b8", fontWeight: 800, textTransform: "uppercase" }}>RATE RANGE ({currency})</span>
+                <span style={{ fontSize: "13px", fontWeight: 900, color: "#4ade80" }}>{currency}{minRate.toLocaleString()} – {currency}{maxRate.toLocaleString()} / hr</span>
+              </div>
+
+              {skillsText && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                  <span style={{ fontSize: "10px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase" }}>Verified Skills & Tech Stack</span>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                    {skillsText.split(",").map((s, i) => (
+                      <span key={i} style={{ fontSize: "10.5px", fontWeight: 700, padding: "3px 8px", borderRadius: "6px", background: "rgba(192,132,252,0.15)", border: "1px solid rgba(192,132,252,0.3)", color: "#e9d5ff" }}>
+                        {s.trim()}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {jobText && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                  <span style={{ fontSize: "10px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase" }}>Portfolio & Deliverables Scope</span>
+                  <div style={{ background: "rgba(255,255,255,0.03)", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.06)", fontSize: "11.5px", color: "#cbd5e1", lineHeight: 1.5, maxHeight: "120px", overflowY: "auto", whiteSpace: "pre-wrap" }}>
+                    {jobText}
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "4px" }}>
+                <span style={{ fontSize: "11px", color: "#64748b" }}>ID: {userId}</span>
+                <button onClick={() => setIsActive(false)} style={{ padding: "6px 12px", borderRadius: "8px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#cbd5e1", fontSize: "11.5px", fontWeight: 700, cursor: "pointer" }}>
+                  ✏️ Edit Profile
+                </button>
+              </div>
             </div>
+          ) : (
+            <>
+              <span style={{ fontSize: "10.5px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.8px", marginTop: "4px" }}>Your Freelancer Profile</span>
+              
+              {[
+                { label: "Display Name", value: displayName, set: setDisplayName, ph: "e.g. Aditya Dhiman" },
+                { label: "Role / Title", value: roleTitle, set: setRoleTitle, ph: "e.g. Senior React & Cloud Architect" },
+                { label: "Skills (comma-separated)", value: skillsText, set: setSkillsText, ph: "React, Node.js, AWS, Python, Kubernetes" },
+              ].map(({ label, value, set, ph }) => (
+                <div key={label} style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                  <label style={{ fontSize: "10px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.6px" }}>{label}</label>
+                  <input
+                    value={value} onChange={(e) => set(e.target.value)} placeholder={ph}
+                    style={{ padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#f8fafc", fontSize: "12.5px", outline: "none" }}
+                  />
+                </div>
+              ))}
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                  <label style={{ fontSize: "10px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase" }}>Min Rate ({currency})</label>
+                  <input type="number" value={minRate} onChange={(e) => setMinRate(Number(e.target.value))}
+                    style={{ padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#f8fafc", fontSize: "12.5px", outline: "none" }} />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                  <label style={{ fontSize: "10px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase" }}>Max Rate ({currency})</label>
+                  <input type="number" value={maxRate} onChange={(e) => setMaxRate(Number(e.target.value))}
+                    style={{ padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#f8fafc", fontSize: "12.5px", outline: "none" }} />
+                </div>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                <label style={{ fontSize: "10px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase" }}>Job / SOW / Portfolio Summary</label>
+                <textarea value={jobText} onChange={(e) => setJobText(e.target.value)} placeholder="Paste your SOW, past project brief, or expertise summary..."
+                  style={{ padding: "10px 12px", minHeight: "120px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#f8fafc", fontSize: "12px", lineHeight: 1.5, outline: "none", resize: "vertical", fontFamily: "inherit" }} />
+              </div>
+
+              <button onClick={handleGoActive} disabled={isRegistering || !displayName.trim() || !roleTitle.trim()}
+                style={{ marginTop: "6px", padding: "12px", borderRadius: "10px", background: "#c084fc", color: "#000", border: "none", fontWeight: 900, fontSize: "13px", cursor: isRegistering ? "wait" : "pointer", boxShadow: "0 4px 20px rgba(192,132,252,0.3)" }}>
+                {isRegistering ? "Registering..." : "🚀 Go Active — Join Matchmaking Pool"}
+              </button>
+            </>
           )}
         </div>
 
@@ -1106,64 +1154,104 @@ function ClientLobby({ onDealAccepted, onBack }: {
       </div>
 
       <div className="mobile-stack" style={{ flex: 1, display: "flex", gap: "20px", marginTop: "16px", overflow: "hidden" }}>
-        {/* Left: Job Posting Form */}
+        {/* Left: Job Posting Form / Dedicated Card */}
         <div style={{ width: "380px", display: "flex", flexDirection: "column", gap: "10px", background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "16px", overflowY: "auto" }}>
           
           {/* AI JD Upload */}
-          <div style={{ background: "linear-gradient(135deg, rgba(56,189,248,0.1), rgba(192,132,252,0.1))", border: "1px solid rgba(56,189,248,0.4)", borderRadius: "12px", padding: "16px", textAlign: "center", cursor: "pointer", transition: "0.2s" }} onClick={() => fileInputRef.current?.click()}>
-            <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".pdf,.txt,.md" style={{ display: 'none' }} />
-            <DocIcon size={24} />
-            <h3 style={{ margin: "6px 0 3px 0", fontSize: "14px", color: "#38bdf8" }}>AI JD Intelligence</h3>
-            <p style={{ margin: 0, fontSize: "11px", color: "rgba(255,255,255,0.7)" }}>
-              {isUploading ? "Extracting intelligence with Gemini 2.5 Flash..." : "Upload your Job Description PDF to auto-fill."}
-            </p>
-          </div>
-
-          <span style={{ fontSize: "10.5px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.8px", marginTop: "8px" }}>Your Job Posting</span>
-
-          {[
-            { label: "Your Name", value: displayName, set: setDisplayName, ph: "e.g. Alex (Product Lead)" },
-            { label: "Company", value: company, set: setCompany, ph: "e.g. Vertex Systems Inc." },
-            { label: "Industry", value: industry, set: setIndustry, ph: "e.g. AI, Fintech, SaaS, Healthcare" },
-            { label: "Hiring Preference", value: hiringPref, set: setHiringPref, ph: "e.g. Milestone-Based Escrow / Fixed Scope" },
-          ].map(({ label, value, set, ph }) => (
-            <div key={label} style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-              <label style={{ fontSize: "10px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.6px" }}>{label}</label>
-              <input value={value} onChange={(e) => set(e.target.value)} placeholder={ph} disabled={isRegistered}
-                style={{ padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#f8fafc", fontSize: "12.5px", outline: "none" }} />
+          {!isRegistered && (
+            <div style={{ background: "linear-gradient(135deg, rgba(56,189,248,0.1), rgba(192,132,252,0.1))", border: "1px solid rgba(56,189,248,0.4)", borderRadius: "12px", padding: "16px", textAlign: "center", cursor: "pointer", transition: "0.2s" }} onClick={() => fileInputRef.current?.click()}>
+              <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".pdf,.txt,.md" style={{ display: 'none' }} />
+              <DocIcon size={24} />
+              <h3 style={{ margin: "6px 0 3px 0", fontSize: "14px", color: "#38bdf8" }}>AI JD Intelligence</h3>
+              <p style={{ margin: 0, fontSize: "11px", color: "rgba(255,255,255,0.7)" }}>
+                {isUploading ? "Extracting intelligence with Gemini 2.5 Flash..." : "Upload your Job Description PDF to auto-fill."}
+              </p>
             </div>
-          ))}
+          )}
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-            <label style={{ fontSize: "10px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase" }}>Job Description / RFP</label>
-            <textarea value={jobDescription} onChange={(e) => setJobDescription(e.target.value)} placeholder="Paste your full RFP, job description, or project requirements..." disabled={isRegistered}
-              style={{ padding: "10px 12px", minHeight: "100px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#f8fafc", fontSize: "12px", lineHeight: 1.5, outline: "none", resize: "vertical", fontFamily: "inherit" }} />
-          </div>
+          {isRegistered ? (
+            /* Dedicated Registered Client Job Posting Card */
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", background: "linear-gradient(135deg, rgba(56,189,248,0.08), rgba(15,23,42,0.85))", border: "1px solid rgba(56,189,248,0.35)", borderRadius: "14px", padding: "18px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 800, color: "#ffffff" }}>{company || "Enterprise Client"}</h3>
+                  <span style={{ fontSize: "11.5px", color: "#38bdf8", fontWeight: 700 }}>Posted by: {displayName}</span>
+                </div>
+                <span style={{ fontSize: "10px", fontWeight: 800, padding: "4px 9px", borderRadius: "12px", background: "rgba(74,222,128,0.15)", border: "1px solid rgba(74,222,128,0.3)", color: "#4ade80", letterSpacing: "0.5px" }}>
+                  🟢 JOB POSTED
+                </span>
+              </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-              <label style={{ fontSize: "10px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase" }}>Min Budget ({currency})</label>
-              <input type="number" value={budgetMin} onChange={(e) => setBudgetMin(Number(e.target.value))} disabled={isRegistered}
-                style={{ padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#f8fafc", fontSize: "12.5px", outline: "none" }} />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                <div style={{ background: "rgba(255,255,255,0.03)", padding: "8px 10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.06)" }}>
+                  <span style={{ fontSize: "9.5px", color: "#94a3b8", fontWeight: 800, textTransform: "uppercase" }}>INDUSTRY</span>
+                  <div style={{ fontSize: "12px", fontWeight: 700, color: "#fff" }}>{industry || "Technology"}</div>
+                </div>
+                <div style={{ background: "rgba(255,255,255,0.03)", padding: "8px 10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.06)" }}>
+                  <span style={{ fontSize: "9.5px", color: "#94a3b8", fontWeight: 800, textTransform: "uppercase" }}>HIRING PREFERENCE</span>
+                  <div style={{ fontSize: "12px", fontWeight: 700, color: "#fff" }}>{hiringPref || "Milestone Escrow"}</div>
+                </div>
+              </div>
+
+              <div style={{ background: "rgba(255,255,255,0.03)", padding: "10px 12px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: "10.5px", color: "#94a3b8", fontWeight: 800, textTransform: "uppercase" }}>BUDGET RANGE ({currency})</span>
+                <span style={{ fontSize: "13px", fontWeight: 900, color: "#4ade80" }}>{currency}{budgetMin.toLocaleString()} – {currency}{budgetMax.toLocaleString()}</span>
+              </div>
+
+              {jobDescription && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                  <span style={{ fontSize: "10px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase" }}>Job Description (JD) / RFP Scope</span>
+                  <div style={{ background: "rgba(255,255,255,0.03)", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.06)", fontSize: "11.5px", color: "#cbd5e1", lineHeight: 1.5, maxHeight: "140px", overflowY: "auto", whiteSpace: "pre-wrap" }}>
+                    {jobDescription}
+                  </div>
+                </div>
+              )}
+
+              <button onClick={() => setIsRegistered(false)} style={{ marginTop: "4px", padding: "8px", borderRadius: "8px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#cbd5e1", fontSize: "11.5px", fontWeight: 700, cursor: "pointer" }}>
+                ✏️ Edit Job Posting (JD)
+              </button>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-              <label style={{ fontSize: "10px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase" }}>Max Budget ({currency})</label>
-              <input type="number" value={budgetMax} onChange={(e) => setBudgetMax(Number(e.target.value))} disabled={isRegistered}
-                style={{ padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#f8fafc", fontSize: "12.5px", outline: "none" }} />
-            </div>
-          </div>
-
-          {!isRegistered ? (
-            <button onClick={handleRegister} disabled={isRegistering || !displayName.trim()}
-              style={{ marginTop: "6px", padding: "12px", borderRadius: "10px", background: "#38bdf8", color: "#000", border: "none", fontWeight: 900, fontSize: "13px", cursor: isRegistering ? "wait" : "pointer", boxShadow: "0 4px 20px rgba(56,189,248,0.3)" }}>
-              {isRegistering ? "Registering..." : "🔍 Post Job & Browse Freelancers"}
-            </button>
           ) : (
-            <div style={{ padding: "10px", borderRadius: "10px", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)", textAlign: "center" }}>
-              <span style={{ fontSize: "12px", fontWeight: 800, color: "#4ade80" }}>✓ JOB POSTED</span>
-              <p style={{ fontSize: "11px", color: "#94a3b8", margin: "2px 0 0 0" }}>Browse and invite freelancers →</p>
-              <button onClick={() => setIsRegistered(false)} style={{ display: "block", margin: "6px auto 0 auto", background: "transparent", border: "none", color: "#94a3b8", fontSize: "11px", textDecoration: "underline", cursor: "pointer" }}>Edit Job Posting</button>
-            </div>
+            <>
+              <span style={{ fontSize: "10.5px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.8px", marginTop: "4px" }}>Your Job Posting</span>
+
+              {[
+                { label: "Your Name", value: displayName, set: setDisplayName, ph: "e.g. Alex (Product Lead)" },
+                { label: "Company", value: company, set: setCompany, ph: "e.g. Vertex Systems Inc." },
+                { label: "Industry", value: industry, set: setIndustry, ph: "e.g. AI, Fintech, SaaS, Healthcare" },
+                { label: "Hiring Preference", value: hiringPref, set: setHiringPref, ph: "e.g. Milestone-Based Escrow / Fixed Scope" },
+              ].map(({ label, value, set, ph }) => (
+                <div key={label} style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                  <label style={{ fontSize: "10px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.6px" }}>{label}</label>
+                  <input value={value} onChange={(e) => set(e.target.value)} placeholder={ph}
+                    style={{ padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#f8fafc", fontSize: "12.5px", outline: "none" }} />
+                </div>
+              ))}
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                <label style={{ fontSize: "10px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase" }}>Job Description / RFP</label>
+                <textarea value={jobDescription} onChange={(e) => setJobDescription(e.target.value)} placeholder="Paste your full RFP, job description, or project requirements..."
+                  style={{ padding: "10px 12px", minHeight: "100px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#f8fafc", fontSize: "12px", lineHeight: 1.5, outline: "none", resize: "vertical", fontFamily: "inherit" }} />
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                  <label style={{ fontSize: "10px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase" }}>Min Budget ({currency})</label>
+                  <input type="number" value={budgetMin} onChange={(e) => setBudgetMin(Number(e.target.value))}
+                    style={{ padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#f8fafc", fontSize: "12.5px", outline: "none" }} />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                  <label style={{ fontSize: "10px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase" }}>Max Budget ({currency})</label>
+                  <input type="number" value={budgetMax} onChange={(e) => setBudgetMax(Number(e.target.value))}
+                    style={{ padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "#f8fafc", fontSize: "12.5px", outline: "none" }} />
+                </div>
+              </div>
+
+              <button onClick={handleRegister} disabled={isRegistering || !displayName.trim()}
+                style={{ marginTop: "6px", padding: "12px", borderRadius: "10px", background: "#38bdf8", color: "#000", border: "none", fontWeight: 900, fontSize: "13px", cursor: isRegistering ? "wait" : "pointer", boxShadow: "0 4px 20px rgba(56,189,248,0.3)" }}>
+                {isRegistering ? "Registering..." : "🔍 Post Job & Browse Freelancers"}
+              </button>
+            </>
           )}
         </div>
 
