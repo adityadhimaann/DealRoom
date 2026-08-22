@@ -203,6 +203,9 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
   const [currency, setCurrency] = useState("$");
   const [jobText, setJobText] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [experience, setExperience] = useState<number>(0);
+  const [education, setEducation] = useState<string>("");
   const [isActive, setIsActive] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [pendingInvite, setPendingInvite] = useState<DealInvite | null>(null);
@@ -210,11 +213,43 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
   const isAcceptingRef = useRef(false);
   const wsRef = useRef<WebSocket | null>(null);
 
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const data = await uploadCv(file);
+      setRoleTitle(data.role_title || "");
+      if (data.skills) setSkillsText(data.skills.join(", "));
+      if (data.projects) setProjects(data.projects);
+      if (data.years_of_experience) setExperience(data.years_of_experience);
+      if (data.education) setEducation(data.education);
+      
+      const updatedProfile = {
+        display_name: displayName,
+        role_title: data.role_title || "",
+        skillsText: data.skills?.join(", ") || "",
+        projects: data.projects || [],
+        years_of_experience: data.years_of_experience || 0,
+        education: data.education || ""
+      };
+      
+      alert("CV Extracted successfully! Hit 'Go Active' to join the pool with this intelligence.");
+    } catch (err: any) {
+      alert("Failed to parse CV: " + err.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleGoActive = async () => {
     if (!displayName.trim() || !roleTitle.trim()) return;
     setIsRegistering(true);
     try {
-      const result = await registerFreelancer({
+      const payload: any = {
         display_name: displayName.trim(),
         role_title: roleTitle.trim(),
         skills: skillsText.split(",").map(s => s.trim()).filter(Boolean),
@@ -222,7 +257,12 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
         max_rate: maxRate,
         currency,
         job_text: jobText.trim(),
-      });
+        projects,
+        years_of_experience: experience,
+        education
+      };
+      
+      const result = await registerFreelancer(payload);
       setUserId(result.user_id);
       setIsActive(true);
 

@@ -149,6 +149,18 @@ export async function uploadProjectDocument(file: File): Promise<JobAnalysisResu
   return res.json();
 }
 
+export async function uploadCv(file: File): Promise<any> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch(`${API_BASE}/lobby/upload-cv`, {
+    method: "POST",
+    body: formData,
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
 // ── Lobby API ────────────────────────────────────────────────
 
 export async function registerFreelancer(profile: {
