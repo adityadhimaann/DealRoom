@@ -567,6 +567,8 @@ function ClientLobby({ onDealAccepted, onBack }: {
   };
   const [displayName, setDisplayName] = useLocalStorageState("dr_cl_name", "");
   const [company, setCompany] = useLocalStorageState("dr_cl_comp", "");
+  const [industry, setIndustry] = useLocalStorageState("dr_cl_industry", "AI & Software");
+  const [hiringPref, setHiringPref] = useLocalStorageState("dr_cl_pref", "Milestone-Based Escrow");
   const [jobDescription, setJobDescription] = useLocalStorageState("dr_cl_desc", "");
   const [budgetMin, setBudgetMin] = useLocalStorageState<number>("dr_cl_bmin", 5000);
   const [budgetMax, setBudgetMax] = useLocalStorageState<number>("dr_cl_bmax", 15000);
@@ -750,8 +752,10 @@ function ClientLobby({ onDealAccepted, onBack }: {
           <span style={{ fontSize: "10.5px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.8px", marginTop: "8px" }}>Your Job Posting</span>
 
           {[
-            { label: "Your Name", value: displayName, set: setDisplayName, ph: "e.g. Product Manager at Acme" },
-            { label: "Company", value: company, set: setCompany, ph: "e.g. Acme Inc." },
+            { label: "Your Name", value: displayName, set: setDisplayName, ph: "e.g. Alex (Product Lead)" },
+            { label: "Company", value: company, set: setCompany, ph: "e.g. Vertex Systems Inc." },
+            { label: "Industry", value: industry, set: setIndustry, ph: "e.g. AI, Fintech, SaaS, Healthcare" },
+            { label: "Hiring Preference", value: hiringPref, set: setHiringPref, ph: "e.g. Milestone-Based Escrow / Fixed Scope" },
           ].map(({ label, value, set, ph }) => (
             <div key={label} style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
               <label style={{ fontSize: "10px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.6px" }}>{label}</label>
@@ -915,6 +919,12 @@ function NegotiationArena({
   const [isDbModalOpen, setIsDbModalOpen] = useState(false);
   const [isLlamaModalOpen, setIsLlamaModalOpen] = useState(false);
   const [showContract, setShowContract] = useState(false);
+  const [centerTab, setCenterTab] = useState<"agents" | "human_chat">("agents");
+  const [humanMessages, setHumanMessages] = useState<Array<{ sender: string; role: string; text: string; timestamp: string }>>([
+    { sender: "System", role: "Room", text: "Secure Direct Human Channel initialized. You can message the other party directly without AI intervention.", timestamp: "Live" }
+  ]);
+  const [humanInput, setHumanInput] = useState("");
+  const [unreadHumanCount, setUnreadHumanCount] = useState(0);
   const wsRef = useRef<WebSocket | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const autoRunningRef = useRef(false);
@@ -945,7 +955,13 @@ function NegotiationArena({
     ws.onmessage = async (event) => {
       try {
         const data = JSON.parse(event.data);
-        if (data.type === "turn_thinking") { setIsThinking(data.agent); setSpeakingAgent(null); }
+        if (data.type === "human_chat_message") {
+          setHumanMessages(prev => [...prev, { sender: data.sender, role: data.role, text: data.text, timestamp: data.timestamp }]);
+          if (centerTab !== "human_chat") {
+            setUnreadHumanCount(c => c + 1);
+          }
+        }
+        else if (data.type === "turn_thinking") { setIsThinking(data.agent); setSpeakingAgent(null); }
         else if (data.type === "turn_ready") {
           setIsThinking(null); setSpeakingAgent(data.turn.agent);
           const rec: TurnWithAudio = { ...data.turn, audioBase64: data.audio_base64, acoustics: data.acoustics };
@@ -965,6 +981,18 @@ function NegotiationArena({
   const handleStartAuto = () => { if (wsRef.current?.readyState === WebSocket.OPEN) { setIsAutoRunning(true); autoRunningRef.current = true; wsRef.current.send(JSON.stringify({ action: "step" })); } };
   const handlePause = () => { setIsAutoRunning(false); autoRunningRef.current = false; };
   const handleStepTurn = () => { if (wsRef.current?.readyState === WebSocket.OPEN) wsRef.current.send(JSON.stringify({ action: "step" })); };
+
+    const handleSendHumanMessage = () => {
+    if (!humanInput.trim() || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+    const roleName = myUserId?.startsWith("fl_") ? "Freelancer" : "Client";
+    wsRef.current.send(JSON.stringify({
+      action: "human_chat",
+      sender: roleName,
+      role: roleName,
+      text: humanInput.trim()
+    }));
+    setHumanInput("");
+  };
 
   const handleSendManualTurn = (agent: "A" | "B") => {
     if (!manualMsgA.trim() || wsRef.current?.readyState !== WebSocket.OPEN) return;
@@ -1053,9 +1081,11 @@ function NegotiationArena({
             </div>
           )}
 
-          <div style={{ flexShrink: 0 }}><DealRadar setup={setup} turns={turns} currency={currency} /></div>
+          {centerTab === "agents" ? (
+            <>
+              <div style={{ flexShrink: 0 }}><DealRadar setup={setup} turns={turns} currency={currency} /></div>
 
-          {/* Transcript */}
+              {/* Transcript */}
           <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", paddingRight: "6px", display: "flex", flexDirection: "column", gap: "8px" }}>
             {turns.length === 0 && !isThinking && <div style={{ textAlign: "center", color: "#64748b", margin: "auto", padding: "20px 0" }}><p style={{ fontSize: "13px", fontWeight: 600, margin: "0 0 4px 0" }}>Click "Auto" to launch voice debate</p></div>}
             {turns.map((turn) => {
@@ -1125,6 +1155,67 @@ function NegotiationArena({
               </div>
             )}
           </div>
+            </>
+          ) : (
+            /* Direct Human-to-Human Chat View */
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "10px", overflow: "hidden" }}>
+              <div style={{ background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.25)", borderRadius: "10px", padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <div style={{ fontSize: "12.5px", fontWeight: 800, color: "#e9d5ff" }}>💬 Live Human-to-Human Channel</div>
+                  <div style={{ fontSize: "10.5px", color: "#94a3b8" }}>Direct confidential messaging between Freelancer & Client</div>
+                </div>
+                <span style={{ fontSize: "9px", fontWeight: 800, padding: "2px 8px", borderRadius: "12px", background: "rgba(74,222,128,0.15)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.3)" }}>ENCRYPTED</span>
+              </div>
+
+              {/* Message List */}
+              <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "8px", paddingRight: "4px" }}>
+                {humanMessages.map((m, idx) => {
+                  const isMe = (myUserId?.startsWith("fl_") && m.role === "Freelancer") || (!myUserId?.startsWith("fl_") && m.role === "Client");
+                  const isSys = m.sender === "System";
+                  return (
+                    <div key={idx} style={{ display: "flex", justifyContent: isSys ? "center" : isMe ? "flex-end" : "flex-start" }}>
+                      <div style={{
+                        maxWidth: "80%",
+                        padding: "8px 12px",
+                        borderRadius: "10px",
+                        background: isSys ? "rgba(255,255,255,0.04)" : isMe ? "linear-gradient(135deg, rgba(56,189,248,0.2), rgba(30,58,138,0.3))" : "linear-gradient(135deg, rgba(168,85,247,0.2), rgba(88,28,135,0.3))",
+                        border: `1px solid ${isSys ? "rgba(255,255,255,0.08)" : isMe ? "rgba(56,189,248,0.4)" : "rgba(168,85,247,0.4)"}`,
+                        fontSize: "12px",
+                        color: "#f8fafc"
+                      }}>
+                        {!isSys && (
+                          <div style={{ display: "flex", justifyContent: "space-between", gap: "8px", marginBottom: "3px", fontSize: "10px", fontWeight: 800, color: isMe ? "#38bdf8" : "#c084fc" }}>
+                            <span>{m.sender} {isMe ? "(You)" : ""}</span>
+                            <span style={{ opacity: 0.6 }}>{m.timestamp}</span>
+                          </div>
+                        )}
+                        <p style={{ margin: 0, lineHeight: 1.45 }}>{m.text}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Input Area */}
+              <div style={{ display: "flex", gap: "8px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", padding: "8px 10px" }}>
+                <input
+                  type="text"
+                  value={humanInput}
+                  onChange={(e) => setHumanInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleSendHumanMessage(); }}
+                  placeholder="Type a direct message to the other party..."
+                  style={{ flex: 1, background: "transparent", border: "none", color: "#fff", fontSize: "12.5px", outline: "none" }}
+                />
+                <button
+                  onClick={handleSendHumanMessage}
+                  disabled={!humanInput.trim()}
+                  style={{ padding: "6px 14px", borderRadius: "8px", background: humanInput.trim() ? "#38bdf8" : "rgba(255,255,255,0.08)", color: humanInput.trim() ? "#000" : "#64748b", border: "none", fontWeight: 800, fontSize: "12px", cursor: humanInput.trim() ? "pointer" : "not-allowed" }}
+                >
+                  Send ➔
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right: Agent B */}

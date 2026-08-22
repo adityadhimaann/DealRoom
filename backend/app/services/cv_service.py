@@ -1,20 +1,26 @@
-"""CV Intelligence Service — Extracts structured profiles from resumes."""
+"""CV Intelligence Service — Extracts structured profiles from resumes (PDFs & Images)."""
 import logging
 import io
 import json
+import base64
 import pypdf
 from groq import Groq
 import os
+from google import genai
+from google.genai import types
 
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
 
+
 class CVService:
     def __init__(self):
         settings = get_settings()
+        self.settings = settings
         self.groq_client = Groq(api_key=settings.groq_api_key)
         self.model = "openai/gpt-oss-120b"
+        self.gemini_client = genai.Client(api_key=settings.gemini_api_key) if settings.gemini_api_key else None
 
     def extract_text_from_pdf(self, file_bytes: bytes) -> str:
         """Extract raw text from PDF bytes."""
@@ -115,5 +121,61 @@ Return ONLY a strictly valid JSON object matching this schema:
         except Exception as e:
             logger.error(f"Groq CV extraction failed: {e}")
             raise RuntimeError("Failed to parse CV with AI")
+
+    def parse_image_cv_to_structured_data(self, image_bytes: bytes, mime_type: str = "image/png") -> dict:
+        """Extract profile directly from CV image using Gemini Vision."""
+        schema = {
+            "name": "Full Name",
+            "role_title": "Primary Professional Role / Headline",
+            "skills": ["Skill 1", "Skill 2"],
+            "years_of_experience": 5,
+            "education": "University / Degree",
+            "min_rate": 6000,
+            "max_rate": 18000,
+            "summary": "Detailed, highly articulate 3-5 paragraph technical summary covering background, key achievements, major projects, and domain expertise suitable for a client proposal."
+        }
+        
+        prompt = f"""Analyze this resume image and extract all relevant candidate information into a comprehensive structured profile JSON.
+Return ONLY valid JSON matching this schema:
+{json.dumps(schema, indent=2)}"""
+
+        try:
+            if self.gemini_client:
+                part = types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
+                response = self.gemini_client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=[prompt, part]
+                )
+                text = response.text or "{}"
+            else:
+                raise ValueError("Vision client not configured")
+        except Exception as e:
+            logger.error(f"Image CV parsing failed: {e}")
+            raise RuntimeError(f"Could not parse image CV: {str(e)}")
+
+        content = text.strip()
+        if content.startswith("```json"):
+            content = content[7:]
+        if content.startswith("```"):
+            content = content[3:]
+        if content.endswith("```"):
+            content = content[:-3]
+        content = content.strip()
+
+        try:
+            data = json.loads(content)
+            if isinstance(data, list) and len(data) > 0 and isinstance(data[0], dict):
+                data = data[0]
+            elif not isinstance(data, dict):
+                data = {}
+        except Exception:
+            data = {}
+
+        if not data.get("summary") or len(str(data.get("summary")).strip()) < 20:
+            skills_str = ", ".join(data.get("skills", [])) if isinstance(data.get("skills"), list) else str(data.get("skills", ""))
+            data["summary"] = f"{data.get('name', 'Candidate')} is an experienced {data.get('role_title', 'Engineer')} with verified background in {data.get('education', 'Technology')}.\n\nSkills:\n{skills_str}"
+
+        return data
+
 
 cv_service = CVService()

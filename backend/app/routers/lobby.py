@@ -55,22 +55,34 @@ class InviteResponseRequest(BaseModel):
 
 @router.post("/upload-cv")
 async def upload_cv(file: UploadFile = File(...)):
-    """Extract text from CV PDF and parse into structured profile data."""
-    if not file.filename.lower().endswith('.pdf'):
-        raise HTTPException(status_code=400, detail="Only PDF files are currently supported for CV upload.")
+    """Extract profile from CV (PDF or Image) and parse into structured profile data."""
+    fn = file.filename.lower()
+    is_pdf = fn.endswith('.pdf')
+    is_image = any(fn.endswith(ext) for ext in ['.png', '.jpg', '.jpeg', '.webp'])
+    
+    if not is_pdf and not is_image:
+        raise HTTPException(status_code=400, detail="Only PDF and Image files (.png, .jpg, .jpeg, .webp) are supported for CV upload.")
     
     file_bytes = await file.read()
+    
     try:
-        text = cv_service.extract_text_from_pdf(file_bytes)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-        
-    try:
-        # Index the CV into LlamaIndex for RAG (Retrieval-Augmented Generation) during negotiation
-        llamaindex_service.index_pdf_bytes(file_bytes, filename=file.filename)
-        
-        structured_data = cv_service.parse_cv_to_structured_data(text)
-        return structured_data
+        if is_pdf:
+            text = cv_service.extract_text_from_pdf(file_bytes)
+            # Index the CV into LlamaIndex for RAG
+            llamaindex_service.index_pdf_bytes(file_bytes, filename=file.filename)
+            structured_data = cv_service.parse_cv_to_structured_data(text)
+            return structured_data
+        else:
+            mime = "image/png"
+            if fn.endswith('.jpg') or fn.endswith('.jpeg'):
+                mime = "image/jpeg"
+            elif fn.endswith('.webp'):
+                mime = "image/webp"
+            structured_data = cv_service.parse_image_cv_to_structured_data(file_bytes, mime_type=mime)
+            # Index image summary text into LlamaIndex
+            summary_txt = f"{structured_data.get('name', '')} {structured_data.get('role_title', '')}\n{structured_data.get('summary', '')}\nSkills: {', '.join(structured_data.get('skills', []))}"
+            llamaindex_service.index_raw_text(summary_txt, doc_id=f"cv_{file.filename}")
+            return structured_data
     except Exception as e:
         import traceback
         traceback.print_exc()

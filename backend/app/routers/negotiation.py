@@ -235,6 +235,7 @@ async def websocket_negotiation(websocket: WebSocket, session_id: str):
     """Real-time streaming WebSocket with pre-buffering, audit logging, and dynamic currency."""
     await websocket.accept()
     logger.info(f"WebSocket connected for session: {session_id}")
+    session_subscribers.setdefault(session_id, []).append(websocket)
 
     state = orchestrator.get_session(session_id)
     if not state:
@@ -415,8 +416,8 @@ async def websocket_negotiation(websocket: WebSocket, session_id: str):
             min_price=cfg.min_price if cfg else None,
         )
 
-        # Send turn payload with live acoustics
-        await websocket.send_json({
+        # Broadcast turn payload with live acoustics to all connected participants in this room
+        payload = {
             "type": "turn_ready",
             "turn": turn.model_dump(),
             "audio_base64": payload_data["audio_base64"],
@@ -425,7 +426,12 @@ async def websocket_negotiation(websocket: WebSocket, session_id: str):
             "deal_reached": payload_data["deal_reached"],
             "final_amount": payload_data["final_amount"],
             "deal_quality_score": payload_data["deal_quality_score"],
-        })
+        }
+        for ws in list(session_subscribers.get(session_id, [])):
+            try:
+                await ws.send_json(payload)
+            except Exception:
+                pass
 
         if not payload_data["is_complete"]:
             _start_precomputation()
@@ -435,7 +441,27 @@ async def websocket_negotiation(websocket: WebSocket, session_id: str):
             data = await websocket.receive_json()
             action = data.get("action")
 
-            if action == "step":
+            if action == "human_chat":
+                sender = data.get("sender", "Human")
+                role = data.get("role", "Participant")
+                text = data.get("text", "").strip()
+                from datetime import datetime
+                ts = datetime.utcnow().strftime("%H:%M")
+                if text:
+                    msg_payload = {
+                        "type": "human_chat_message",
+                        "sender": sender,
+                        "role": role,
+                        "text": text,
+                        "timestamp": ts,
+                    }
+                    for ws in list(session_subscribers.get(session_id, [])):
+                        try:
+                            await ws.send_json(msg_payload)
+                        except Exception:
+                            pass
+
+            elif action == "step":
                 await run_single_turn()
 
             elif action == "whisper":
@@ -532,6 +558,8 @@ async def websocket_negotiation(websocket: WebSocket, session_id: str):
 
     except WebSocketDisconnect:
         logger.info(f"WebSocket client disconnected for {session_id}")
+        if session_id in session_subscribers and websocket in session_subscribers[session_id]:
+            session_subscribers[session_id].remove(websocket)
     except Exception as e:
         logger.error(f"WebSocket error: {e}")
 
