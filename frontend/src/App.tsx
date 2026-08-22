@@ -217,6 +217,24 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
     localStorage.removeItem("dealroom_screen");
     onBack();
   };
+
+  const handleCreateNewProfile = () => {
+    localStorage.removeItem("dr_fl_name");
+    localStorage.removeItem("dr_fl_role");
+    localStorage.removeItem("dr_fl_skills");
+    localStorage.removeItem("dr_fl_job");
+    localStorage.removeItem("dr_fl_uid");
+    localStorage.removeItem("dr_fl_active");
+    setDisplayName("");
+    setRoleTitle("");
+    setSkillsText("");
+    setJobText("");
+    setMinRate(5000);
+    setMaxRate(15000);
+    setUserId(null);
+    setIsActive(false);
+    setPendingInvite(null);
+  };
   const [displayName, setDisplayName] = useLocalStorageState("dr_fl_name", "");
   const [roleTitle, setRoleTitle] = useLocalStorageState("dr_fl_role", "");
   const [skillsText, setSkillsText] = useLocalStorageState("dr_fl_skills", "");
@@ -509,6 +527,44 @@ function ClientLobby({ onDealAccepted, onBack }: {
     localStorage.removeItem("dealroom_screen");
     onBack();
   };
+
+  const [acceptedInviteForCall, setAcceptedInviteForCall] = useState<DealInvite | null>(null);
+
+  const handleCreateNewJob = () => {
+    localStorage.removeItem("dr_cl_name");
+    localStorage.removeItem("dr_cl_comp");
+    localStorage.removeItem("dr_cl_desc");
+    localStorage.removeItem("dr_cl_bmin");
+    localStorage.removeItem("dr_cl_bmax");
+    localStorage.removeItem("dr_cl_uid");
+    localStorage.removeItem("dr_cl_registered");
+    setDisplayName("");
+    setCompany("");
+    setJobDescription("");
+    setBudgetMin(5000);
+    setBudgetMax(15000);
+    setUserId(null);
+    setIsRegistered(false);
+    setAcceptedInviteForCall(null);
+  };
+
+  const handleCreateNewProfile = () => {
+    localStorage.removeItem("dr_fl_name");
+    localStorage.removeItem("dr_fl_role");
+    localStorage.removeItem("dr_fl_skills");
+    localStorage.removeItem("dr_fl_job");
+    localStorage.removeItem("dr_fl_uid");
+    localStorage.removeItem("dr_fl_active");
+    setDisplayName("");
+    setRoleTitle("");
+    setSkillsText("");
+    setJobText("");
+    setMinRate(5000);
+    setMaxRate(15000);
+    setUserId(null);
+    setIsActive(false);
+    setPendingInvite(null);
+  };
   const [displayName, setDisplayName] = useLocalStorageState("dr_cl_name", "");
   const [company, setCompany] = useLocalStorageState("dr_cl_comp", "");
   const [jobDescription, setJobDescription] = useLocalStorageState("dr_cl_desc", "");
@@ -545,7 +601,7 @@ function ClientLobby({ onDealAccepted, onBack }: {
         if (data.type === "freelancer_list_update") {
           setFreelancers(data.freelancers || []);
         } else if (data.type === "invite_accepted") {
-          onDealAccepted(data.invite, userId);
+          setAcceptedInviteForCall(data.invite);
         } else if (data.type === "invite_declined") {
           setInviteSent(null);
           setWaitingForAccept(false);
@@ -623,7 +679,7 @@ function ClientLobby({ onDealAccepted, onBack }: {
           if (data.type === "freelancer_list_update") {
             setFreelancers(data.freelancers || []);
           } else if (data.type === "invite_accepted") {
-            onDealAccepted(data.invite, result.user_id);
+            setAcceptedInviteForCall(data.invite);
           } else if (data.type === "invite_declined") {
             setInviteSent(null);
             setWaitingForAccept(false);
@@ -1005,21 +1061,51 @@ function NegotiationArena({
             {turns.map((turn) => {
               const isA = turn.agent === "A";
               return (
-                <div key={turn.turn_number} style={{ display: "flex", flexDirection: isA ? "row" : "row-reverse", gap: "8px", alignItems: "flex-start" }}>
-                  <div style={{ width: "24px", height: "24px", borderRadius: "6px", flexShrink: 0, background: isA ? "rgba(192,132,252,0.15)" : "rgba(56,189,248,0.15)", border: `1px solid ${isA ? "#c084fc" : "#38bdf8"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    {isA ? <AgentALogo size={14} /> : <AgentBLogo size={14} />}
+                <div key={turn.turn_number} style={{ display: "flex", flexDirection: isA ? "row" : "row-reverse", gap: "10px", alignItems: "flex-start", animation: "fadeIn 0.3s ease" }}>
+                  <div style={{ width: "28px", height: "28px", borderRadius: "8px", flexShrink: 0, background: isA ? "rgba(192,132,252,0.15)" : "rgba(56,189,248,0.15)", border: `1.5px solid ${isA ? "#c084fc" : "#38bdf8"}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: isA ? "0 0 12px rgba(192,132,252,0.3)" : "0 0 12px rgba(56,189,248,0.3)" }}>
+                    {isA ? <AgentALogo size={15} /> : <AgentBLogo size={15} />}
                   </div>
-                  <div style={{ maxWidth: "82%", padding: "8px 12px", borderRadius: "10px", background: isA ? "rgba(192,132,252,0.06)" : "rgba(56,189,248,0.06)", border: `1px solid ${isA ? "rgba(192,132,252,0.18)" : "rgba(56,189,248,0.18)"}`, fontSize: "12px", color: "#f1f5f9" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                      <span style={{ fontSize: "10.5px", fontWeight: 700, color: isA ? "#c084fc" : "#38bdf8" }}>{isA ? setup.agent_a_config.role_name : setup.agent_b_config.role_name} · R{turn.turn_number}</span>
-                      <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                        {turn.offer_amount && <span style={{ fontSize: "11px", fontWeight: 800, color: "#fff", background: "rgba(255,255,255,0.08)", padding: "1px 5px", borderRadius: "4px" }}>{currency}{turn.offer_amount.toLocaleString()}</span>}
-                        {turn.acoustics && turn.acoustics.bluff_probability >= 50 && <span style={{ fontSize: "9.5px", fontWeight: 800, color: "#fca5a5", background: "rgba(239,68,68,0.18)", border: "1px solid rgba(239,68,68,0.35)", padding: "1px 5px", borderRadius: "4px" }}>🚨 BLUFF {turn.acoustics.bluff_probability}%</span>}
-                        {turn.audioBase64 && <button onClick={() => playBase64Audio(turn.audioBase64!)} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", padding: "0 2px" }}><SpeakerIcon size={12} /></button>}
+                  <div style={{
+                    maxWidth: "85%",
+                    padding: "10px 14px",
+                    borderRadius: "12px",
+                    background: isA ? "linear-gradient(135deg, rgba(192,132,252,0.08), rgba(15,23,42,0.6))" : "linear-gradient(135deg, rgba(56,189,248,0.08), rgba(15,23,42,0.6))",
+                    border: `1px solid ${isA ? "rgba(192,132,252,0.25)" : "rgba(56,189,248,0.25)"}`,
+                    borderLeft: isA ? "3px solid #c084fc" : undefined,
+                    borderRight: !isA ? "3px solid #38bdf8" : undefined,
+                    fontSize: "12.5px",
+                    color: "#f8fafc",
+                    boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+                    backdropFilter: "blur(8px)"
+                  }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", marginBottom: "6px", borderBottom: "1px solid rgba(255,255,255,0.06)", paddingBottom: "4px" }}>
+                      <span style={{ fontSize: "11px", fontWeight: 800, color: isA ? "#c084fc" : "#38bdf8", letterSpacing: "0.2px" }}>
+                        {isA ? setup.agent_a_config.role_name : setup.agent_b_config.role_name} · <span style={{ opacity: 0.7 }}>R{turn.turn_number}</span>
+                      </span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        {turn.offer_amount && (
+                          <span style={{ fontSize: "11.5px", fontWeight: 900, color: "#fff", background: isA ? "rgba(192,132,252,0.25)" : "rgba(56,189,248,0.25)", border: `1px solid ${isA ? "#c084fc" : "#38bdf8"}`, padding: "2px 8px", borderRadius: "6px", boxShadow: "0 0 10px rgba(0,0,0,0.5)" }}>
+                            {currency}{turn.offer_amount.toLocaleString()}
+                          </span>
+                        )}
+                        {turn.acoustics && turn.acoustics.bluff_probability >= 50 && (
+                          <span style={{ fontSize: "10px", fontWeight: 900, color: "#fca5a5", background: "rgba(239,68,68,0.2)", border: "1px solid rgba(239,68,68,0.4)", padding: "2px 6px", borderRadius: "6px", animation: "pulse 1.5s infinite" }}>
+                            🚨 BLUFF {turn.acoustics.bluff_probability}%
+                          </span>
+                        )}
+                        {turn.audioBase64 && (
+                          <button onClick={() => playBase64Audio(turn.audioBase64!)} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "6px", color: "#38bdf8", cursor: "pointer", padding: "3px 6px", display: "flex", alignItems: "center", gap: "3px", fontSize: "10px", fontWeight: 700 }}>
+                            <SpeakerIcon size={12} /> Play Voice
+                          </button>
+                        )}
                       </div>
                     </div>
-                    <p style={{ margin: 0, lineHeight: 1.4 }}>{turn.message}</p>
-                    {turn.reasoning && <p style={{ margin: "4px 0 0 0", fontSize: "10.5px", color: "#94a3b8", fontStyle: "italic" }}>{turn.reasoning}</p>}
+                    <p style={{ margin: 0, lineHeight: 1.55, fontWeight: 500 }}>{turn.message}</p>
+                    {turn.reasoning && (
+                      <div style={{ marginTop: "8px", padding: "6px 8px", borderRadius: "6px", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.05)", fontSize: "11px", color: "#94a3b8", lineHeight: 1.4 }}>
+                        {turn.reasoning}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -1149,5 +1235,37 @@ export default function App() {
     return <NegotiationArena sessionId={sessionId} setup={setup} onReset={handleReset} />;
   }
 
-  return <RoleSelectScreen onSelectRole={handleRoleSelect} />;
+  return <RoleSelectScreen onSelectRole={handleRoleSelect}
+      {/* Incoming Deal Call Modal */}
+      {acceptedInviteForCall && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(14px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+          <div style={{ background: "#0c1017", border: "1px solid rgba(56,189,248,0.5)", boxShadow: "0 0 60px rgba(56,189,248,0.3)", borderRadius: "18px", padding: "30px", maxWidth: "480px", width: "100%", textAlign: "center" }}>
+            <div style={{ width: "68px", height: "68px", borderRadius: "50%", background: "rgba(74,222,128,0.15)", border: "2px solid #4ade80", margin: "0 auto 16px auto", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "30px", boxShadow: "0 0 30px rgba(74,222,128,0.3)" }}>
+              📞
+            </div>
+            <span style={{ fontSize: "10.5px", fontWeight: 800, padding: "3px 10px", borderRadius: "20px", background: "rgba(74,222,128,0.15)", color: "#4ade80", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              Deal Invitation Accepted
+            </span>
+            <h3 style={{ fontSize: "22px", fontWeight: 900, color: "#fff", margin: "12px 0 6px 0" }}>
+              Freelancer Ready to Connect!
+            </h3>
+            <p style={{ fontSize: "13px", color: "#94a3b8", margin: "0 0 24px 0", lineHeight: 1.5 }}>
+              The candidate has reviewed your job requirements and accepted the invitation. Join the live Deal Call now to start autonomous AI agent voice negotiation.
+            </p>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button onClick={() => {
+                const inv = acceptedInviteForCall;
+                setAcceptedInviteForCall(null);
+                onDealAccepted(inv, userId!);
+              }} style={{ flex: 1, padding: "14px", borderRadius: "12px", background: "linear-gradient(135deg, #38bdf8, #22c55e)", color: "#000", border: "none", fontWeight: 900, fontSize: "13.5px", cursor: "pointer", boxShadow: "0 4px 20px rgba(34,197,94,0.4)", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                <span>📞 Join Live Deal Call & Enter DealRoom →</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
+
+
