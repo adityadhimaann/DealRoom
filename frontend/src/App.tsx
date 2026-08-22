@@ -517,8 +517,8 @@ function ClientLobby({ onDealAccepted, onBack }: {
   const [displayName, setDisplayName] = useLocalStorageState("dr_cl_name", "");
   const [company, setCompany] = useLocalStorageState("dr_cl_comp", "");
   const [jobDescription, setJobDescription] = useLocalStorageState("dr_cl_desc", "");
-  const [budgetMin, setBudgetMin] = useLocalStorageState<number>("dr_fl_bmin", 5000);
-  const [budgetMax, setBudgetMax] = useLocalStorageState<number>("dr_fl_bmax", 15000);
+  const [budgetMin, setBudgetMin] = useLocalStorageState<number>("dr_cl_bmin", 5000);
+  const [budgetMax, setBudgetMax] = useLocalStorageState<number>("dr_cl_bmax", 15000);
   const [currency, setCurrency] = useState("$");
   const [userId, setUserId] = useLocalStorageState<string | null>("dr_cl_uid", null);
   const [isRegistered, setIsRegistered] = useLocalStorageState<boolean>("dr_cl_registered", false);
