@@ -175,8 +175,12 @@ async def accept_deal_invite(req: InviteResponseRequest):
     if not invite:
         raise HTTPException(status_code=400, detail="Invite not found or already responded to.")
 
-    # Notify the client that the invite was accepted
+    # Notify both client and freelancer that the invite was accepted
     await matchmaking.send_to_user(invite["client_id"], {
+        "type": "invite_accepted",
+        "invite": invite,
+    })
+    await matchmaking.send_to_user(invite["freelancer_id"], {
         "type": "invite_accepted",
         "invite": invite,
     })
@@ -189,13 +193,17 @@ async def accept_deal_invite(req: InviteResponseRequest):
 
 @router.post("/invite/decline")
 async def decline_deal_invite(req: InviteResponseRequest):
-    """Freelancer declines a deal invite."""
+    """Freelancer or Client declines a deal invite."""
     invite = matchmaking.decline_invite(req.invite_id)
     if not invite:
         raise HTTPException(status_code=400, detail="Invite not found or already responded to.")
 
-    # Notify the client
+    # Notify both client and freelancer
     await matchmaking.send_to_user(invite["client_id"], {
+        "type": "invite_declined",
+        "invite": invite,
+    })
+    await matchmaking.send_to_user(invite["freelancer_id"], {
         "type": "invite_declined",
         "invite": invite,
     })

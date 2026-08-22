@@ -170,6 +170,8 @@ class MatchmakingService:
             "freelancer_id": freelancer_id,
             "client_name": client.get("display_name", "Unknown Client"),
             "client_company": client.get("company", ""),
+            "freelancer_name": freelancer.get("display_name", "Freelancer"),
+            "freelancer_role": freelancer.get("role_title", "Specialist"),
             "job_description": job_description or client.get("job_description", ""),
             "budget_min": client.get("budget_min", 0),
             "budget_max": client.get("budget_max", 0),

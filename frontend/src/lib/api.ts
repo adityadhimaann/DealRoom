@@ -106,6 +106,8 @@ export interface DealInvite {
   freelancer_id: string;
   client_name: string;
   client_company: string;
+  freelancer_name?: string;
+  freelancer_role?: string;
   job_description: string;
   budget_min: number;
   budget_max: number;

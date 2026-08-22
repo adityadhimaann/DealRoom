@@ -531,6 +531,11 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
           const data = JSON.parse(e.data);
           if (data.type === "invite_received") {
             setPendingInvite(data.invite);
+          } else if (data.type === "invite_accepted") {
+            onDealAccepted(data.invite, result.user_id);
+          } else if (data.type === "invite_declined") {
+            setProposalSentId(null);
+            alert("The client declined your deal call request.");
           }
         } catch {}
       };
@@ -607,6 +612,25 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
         currentUserId = `fl_${Math.random().toString(36).substring(2, 9)}`;
         setUserId(currentUserId);
       }
+    }
+
+    // Ensure WebSocket is connected for currentUserId so Freelancer receives real-time accept/decline updates
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      const ws = new WebSocket(`${WS_BASE}/lobby/${currentUserId}`);
+      wsRef.current = ws;
+      ws.onmessage = (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          if (data.type === "invite_received") {
+            setPendingInvite(data.invite);
+          } else if (data.type === "invite_accepted") {
+            onDealAccepted(data.invite, currentUserId!);
+          } else if (data.type === "invite_declined") {
+            setProposalSentId(null);
+            alert("The client declined your deal call request.");
+          }
+        } catch {}
+      };
     }
 
     try {
@@ -918,7 +942,37 @@ function ClientLobby({ onDealAccepted, onBack }: {
   const [freelancers, setFreelancers] = useState<FreelancerProfile[]>([]);
   const [inviteSent, setInviteSent] = useState<string | null>(null);
   const [waitingForAccept, setWaitingForAccept] = useState(false);
+  const [pendingInvite, setPendingInvite] = useState<DealInvite | null>(null);
+  const [isAccepting, setIsAccepting] = useState(false);
+  const isAcceptingRef = useRef(false);
   const wsRef = useRef<WebSocket | null>(null);
+
+  const handleAcceptInvite = async () => {
+    if (!pendingInvite || isAcceptingRef.current) return;
+    isAcceptingRef.current = true;
+    setIsAccepting(true);
+    try {
+      await acceptInvite(pendingInvite.invite_id);
+      onDealAccepted(pendingInvite, userId || pendingInvite.client_id);
+    } catch (err: any) {
+      if (err.message && err.message.includes("already responded")) {
+        onDealAccepted(pendingInvite, userId || pendingInvite.client_id);
+      } else {
+        alert("Failed to accept proposal: " + err.message);
+        isAcceptingRef.current = false;
+      }
+    } finally {
+      setIsAccepting(false);
+    }
+  };
+
+  const handleDeclineInvite = async () => {
+    if (!pendingInvite) return;
+    try {
+      await declineInvite(pendingInvite.invite_id);
+    } catch {}
+    setPendingInvite(null);
+  };
 
   // Verify & Sync client profile with backend database on mount
   useEffect(() => {
@@ -962,12 +1016,14 @@ function ClientLobby({ onDealAccepted, onBack }: {
         const data = JSON.parse(e.data);
         if (data.type === "freelancer_list_update") {
           setFreelancers(data.freelancers || []);
+        } else if (data.type === "invite_received") {
+          setPendingInvite(data.invite);
         } else if (data.type === "invite_accepted") {
           setAcceptedInviteForCall(data.invite);
         } else if (data.type === "invite_declined") {
           setInviteSent(null);
           setWaitingForAccept(false);
-          alert("The freelancer declined your invite. You can try another one.");
+          alert("The proposal/invite was declined.");
         }
       } catch {}
     };
@@ -1040,12 +1096,14 @@ function ClientLobby({ onDealAccepted, onBack }: {
           const data = JSON.parse(e.data);
           if (data.type === "freelancer_list_update") {
             setFreelancers(data.freelancers || []);
+          } else if (data.type === "invite_received") {
+            setPendingInvite(data.invite);
           } else if (data.type === "invite_accepted") {
             setAcceptedInviteForCall(data.invite);
           } else if (data.type === "invite_declined") {
             setInviteSent(null);
             setWaitingForAccept(false);
-            alert("The freelancer declined your invite. You can try another one.");
+            alert("The proposal/invite was declined.");
           }
         } catch {}
       };
@@ -1107,12 +1165,14 @@ function ClientLobby({ onDealAccepted, onBack }: {
           const data = JSON.parse(e.data);
           if (data.type === "freelancer_list_update") {
             setFreelancers(data.freelancers || []);
+          } else if (data.type === "invite_received") {
+            setPendingInvite(data.invite);
           } else if (data.type === "invite_accepted") {
             setAcceptedInviteForCall(data.invite);
           } else if (data.type === "invite_declined") {
             setInviteSent(null);
             setWaitingForAccept(false);
-            alert("The freelancer declined your invite.");
+            alert("The proposal/invite was declined.");
           }
         } catch {}
       };
@@ -1131,6 +1191,57 @@ function ClientLobby({ onDealAccepted, onBack }: {
       background: "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(56,189,248,0.1), transparent 70%), #050508",
       color: "#f8fafc", padding: "20px 28px", boxSizing: "border-box"
     }}>
+      {/* 📩 Pending Freelancer Deal Call Proposal Modal Banner */}
+      {pendingInvite && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.85)",
+          backdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px"
+        }}>
+          <div style={{
+            background: "#0c0d14", border: "1px solid rgba(56,189,248,0.5)", borderRadius: "24px",
+            padding: "32px", maxWidth: "480px", width: "100%", textAlign: "center",
+            boxShadow: "0 0 60px rgba(56,189,248,0.3)"
+          }}>
+            <div style={{ fontSize: "48px", marginBottom: "12px" }}>📩</div>
+            <h3 style={{ fontSize: "22px", fontWeight: 900, color: "#fff", margin: "0 0 8px 0" }}>
+              Deal Call Requested by Freelancer!
+            </h3>
+            <p style={{ fontSize: "13px", color: "#94a3b8", marginBottom: "20px", lineHeight: "1.6" }}>
+              A freelancer <strong>({pendingInvite.freelancer_name || pendingInvite.freelancer_role || "Verified Applicant"})</strong> has submitted a proposal for your job posting and requested an instant AI Deal Call!
+            </p>
+            <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", padding: "14px", marginBottom: "24px", textAlign: "left" }}>
+              <div style={{ fontSize: "11px", fontWeight: 800, color: "#38bdf8", textTransform: "uppercase", marginBottom: "4px" }}>PROPOSAL SCOPE / JOB</div>
+              <div style={{ fontSize: "13px", color: "#e2e8f0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {pendingInvite.job_description || "Technical SOW Negotiation"}
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+              <button
+                onClick={handleDeclineInvite}
+                style={{
+                  flex: 1, padding: "14px 20px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.15)",
+                  background: "rgba(255,255,255,0.05)", color: "#94a3b8", fontWeight: 700, cursor: "pointer", fontSize: "13px"
+                }}
+              >
+                Decline
+              </button>
+              <button
+                onClick={handleAcceptInvite}
+                disabled={isAccepting}
+                style={{
+                  flex: 2, padding: "14px 24px", borderRadius: "12px", border: "none",
+                  background: "linear-gradient(135deg, #38bdf8, #3b82f6)", color: "#fff",
+                  fontWeight: 900, fontSize: "14px", cursor: isAccepting ? "wait" : "pointer",
+                  boxShadow: "0 4px 24px rgba(56,189,248,0.4)"
+                }}
+              >
+                {isAccepting ? "⏳ Connecting Call..." : "📞 Accept Proposal & Join Call →"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="lobby-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: "12px", borderBottom: "1px solid rgba(255,255,255,0.08)", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
