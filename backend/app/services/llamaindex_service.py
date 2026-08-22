@@ -3,11 +3,11 @@ import logging
 import io
 import re
 from typing import Dict, Any, List, Optional
-import pypdf
+import pypdf  # type: ignore
 
-from llama_index.core import Document
-from llama_index.core.node_parser import SentenceSplitter
-from llama_index.core.schema import TextNode
+from llama_index.core import Document  # type: ignore
+from llama_index.core.node_parser import SentenceSplitter  # type: ignore
+from llama_index.core.schema import TextNode  # type: ignore
 
 logger = logging.getLogger("dealroom.llamaindex")
 

@@ -4,11 +4,11 @@ import io
 import json
 import base64
 import re
-import pypdf
+import pypdf  # type: ignore
 import os
-from groq import Groq
-from google import genai
-from google.genai import types
+from groq import Groq  # type: ignore
+from google import genai  # type: ignore
+from google.genai import types  # type: ignore
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
