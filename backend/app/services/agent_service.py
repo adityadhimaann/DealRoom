@@ -405,7 +405,7 @@ class AgentService:
         if extracted_text and len(extracted_text.strip()) > 30:
             return await self.analyze_job_posting(extracted_text, source_hint=filename)
 
-        from google.genai import types
+        from google.genai import types  # type: ignore
         prompt = f"""Analyze project document ({filename}). Extract REAL deliverables, hourly rate, hours/week, months, and total contract value.
 Return JSON with project_title, urgency_level, client_persona, currency, deliverables, recommended_setup (subject, max_turns, currency, deliverables, agent_a_config, agent_b_config), leverage_points, scope_risks."""
 
