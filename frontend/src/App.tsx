@@ -556,6 +556,14 @@ function ClientLobby({ onDealAccepted, onBack }: {
       const fl = await getActiveFreelancers();
       setFreelancers(fl.freelancers);
 
+      // Poll interval fallback to guarantee real-time sync across browsers
+      const pollInterval = setInterval(async () => {
+        try {
+          const latest = await getActiveFreelancers(jobDescription);
+          setFreelancers(latest.freelancers || []);
+        } catch (e) {}
+      }, 2500);
+
       // Connect WebSocket for real-time updates
       const ws = new WebSocket(`${WS_BASE}/lobby/${result.user_id}`);
       wsRef.current = ws;

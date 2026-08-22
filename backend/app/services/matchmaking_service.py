@@ -50,10 +50,10 @@ class MatchmakingService:
     # ── Queries ───────────────────────────────────────────────
 
     def get_active_freelancers(self, job_description: str = "") -> List[dict]:
-        """Return all freelancers, optionally scoring them against a job description."""
+        """Return all freelancers that are not currently in a deal."""
         freelancers = [
             f for f in self.freelancers.values()
-            if f.get("status") == "active"
+            if f.get("status") != "in_deal"
         ]
         
         if not job_description or not job_description.strip():
@@ -179,14 +179,9 @@ class MatchmakingService:
         self.connections[user_id] = ws
 
     def disconnect_user(self, user_id: str):
-        """Remove WebSocket connection and mark user offline."""
+        """Remove WebSocket connection without dropping active matchmaking availability."""
         self.connections.pop(user_id, None)
-        if user_id in self.freelancers:
-            self.freelancers[user_id]["status"] = "offline"
-            logger.info(f"Freelancer {user_id} went offline")
-        if user_id in self.clients:
-            self.clients[user_id]["status"] = "offline"
-            logger.info(f"Client {user_id} went offline")
+        logger.info(f"User {user_id} disconnected socket (retaining profile state)")
 
     async def send_to_user(self, user_id: str, message: dict):
         """Send a JSON message to a specific user via WebSocket."""
