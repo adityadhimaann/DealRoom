@@ -477,6 +477,33 @@ function ClientLobby({ onDealAccepted, onBack }: {
   const [waitingForAccept, setWaitingForAccept] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
 
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const data = await uploadProjectDocument(file);
+      
+      // Auto-fill form from JD extraction
+      const desc = `Project: ${data.project_title}\n\nDeliverables:\n${(data.deliverables || []).join('\n- ')}`;
+      setJobDescription(desc);
+      if (data.recommended_setup?.agent_b_config) {
+        setBudgetMin(data.recommended_setup.agent_b_config.ideal_price);
+        setBudgetMax(data.recommended_setup.agent_b_config.min_price);
+      }
+      if (data.currency) setCurrency(data.currency);
+      
+      alert("Job Description extracted successfully! Hit 'Post Job' to browse matching freelancers.");
+    } catch (err: any) {
+      alert("Failed to parse Job Description: " + err.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleRegister = async () => {
     if (!displayName.trim()) return;
     setIsRegistering(true);
@@ -562,7 +589,18 @@ function ClientLobby({ onDealAccepted, onBack }: {
       <div style={{ flex: 1, display: "flex", gap: "20px", marginTop: "16px", overflow: "hidden" }}>
         {/* Left: Job Posting Form */}
         <div style={{ width: "380px", display: "flex", flexDirection: "column", gap: "10px", background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "16px", overflowY: "auto" }}>
-          <span style={{ fontSize: "10.5px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.8px" }}>Your Job Posting</span>
+          
+          {/* AI JD Upload */}
+          <div style={{ background: "linear-gradient(135deg, rgba(56,189,248,0.1), rgba(192,132,252,0.1))", border: "1px solid rgba(56,189,248,0.4)", borderRadius: "12px", padding: "16px", textAlign: "center", cursor: "pointer", transition: "0.2s" }} onClick={() => fileInputRef.current?.click()}>
+            <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".pdf,.txt,.md" style={{ display: 'none' }} />
+            <DocIcon size={24} />
+            <h3 style={{ margin: "6px 0 3px 0", fontSize: "14px", color: "#38bdf8" }}>AI JD Intelligence</h3>
+            <p style={{ margin: 0, fontSize: "11px", color: "rgba(255,255,255,0.7)" }}>
+              {isUploading ? "Extracting intelligence with Gemini 2.5 Flash..." : "Upload your Job Description PDF to auto-fill."}
+            </p>
+          </div>
+
+          <span style={{ fontSize: "10.5px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.8px", marginTop: "8px" }}>Your Job Posting</span>
 
           {[
             { label: "Your Name", value: displayName, set: setDisplayName, ph: "e.g. Product Manager at Acme" },
