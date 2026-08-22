@@ -134,3 +134,59 @@ body {
   0%, 100% { box-shadow: 0 0 25px rgba(56, 189, 248, 0.2); }
   50% { box-shadow: 0 0 40px rgba(56, 189, 248, 0.4); }
 }
+
+/* ── Responsive Mobile & Tablet Adaptations ── */
+@media (max-width: 1024px) {
+  .arena-grid {
+    grid-template-columns: 1fr !important;
+    overflow-y: auto !important;
+    gap: 14px !important;
+  }
+  .lobby-content {
+    flex-direction: column !important;
+    overflow-y: auto !important;
+  }
+  .lobby-sidebar {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    overflow-y: auto !important;
+  }
+  .role-cards-container {
+    flex-direction: column !important;
+    gap: 18px !important;
+    width: 100% !important;
+    align-items: center !important;
+  }
+  .role-card-btn {
+    width: 100% !important;
+    max-width: 320px !important;
+    padding: 24px 18px !important;
+  }
+  .lobby-container {
+    padding: 12px 14px !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow-y: auto !important;
+  }
+  .lobby-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+  .arena-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+  .arena-container {
+    padding: 10px 12px !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow-y: auto !important;
+  }
+}

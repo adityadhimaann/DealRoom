@@ -243,13 +243,13 @@ function RoleSelectScreen({ onSelectRole }: { onSelectRole: (role: "freelancer" 
       </div>
 
       {/* Role Cards */}
-      <div style={{ display: "flex", gap: "28px" }}>
+      <div className="role-cards-container" style={{ display: "flex", gap: "28px" }}>
         {/* Freelancer Card */}
         <button
           onClick={() => onSelectRole("freelancer")}
           onMouseEnter={() => setHoveredRole("freelancer")}
           onMouseLeave={() => setHoveredRole(null)}
-          style={{
+          className="role-card-btn" style={{
             width: "310px", padding: "32px 26px",
             background: hoveredRole === "freelancer" ? "rgba(192,132,252,0.1)" : "rgba(255,255,255,0.03)",
             border: `1.5px solid ${flActive ? "#c084fc" : hoveredRole === "freelancer" ? "#c084fc" : "rgba(255,255,255,0.12)"}`,
@@ -306,7 +306,7 @@ function RoleSelectScreen({ onSelectRole }: { onSelectRole: (role: "freelancer" 
           onClick={() => onSelectRole("client")}
           onMouseEnter={() => setHoveredRole("client")}
           onMouseLeave={() => setHoveredRole(null)}
-          style={{
+          className="role-card-btn" style={{
             width: "310px", padding: "32px 26px",
             background: hoveredRole === "client" ? "rgba(56,189,248,0.1)" : "rgba(255,255,255,0.03)",
             border: `1.5px solid ${clRegistered ? "#38bdf8" : hoveredRole === "client" ? "#38bdf8" : "rgba(255,255,255,0.12)"}`,
@@ -540,14 +540,14 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
   }, [isActive, userId]);
 
   return (
-    <div style={{
-      height: "100vh", width: "100vw", overflow: "hidden",
+    <div className="lobby-container" style={{
+      minHeight: "100vh", width: "100vw", overflowY: "auto",
       display: "flex", flexDirection: "column",
       background: "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(192,132,252,0.1), transparent 70%), #050508",
       color: "#f8fafc", padding: "20px 28px", boxSizing: "border-box"
     }}>
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: "12px", borderBottom: "1px solid rgba(255,255,255,0.08)", flexShrink: 0 }}>
+      <div className="lobby-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: "12px", borderBottom: "1px solid rgba(255,255,255,0.08)", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <DealRoomLogo size={28} />
           <div>
@@ -569,9 +569,9 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
       </div>
 
       {/* Main Content */}
-      <div style={{ flex: 1, display: "flex", gap: "20px", marginTop: "16px", overflow: "hidden" }}>
+      <div className="lobby-content" style={{ flex: 1, display: "flex", gap: "20px", marginTop: "16px" }}>
         {/* Profile Form */}
-        <div style={{ width: "420px", display: "flex", flexDirection: "column", gap: "12px", background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "18px", overflowY: "auto" }}>
+        <div className="lobby-sidebar" style={{ width: "420px", display: "flex", flexDirection: "column", gap: "12px", background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "18px", overflowY: "auto" }}>
           
           {/* AI CV Upload */}
           <div style={{ background: "linear-gradient(135deg, rgba(56,189,248,0.1), rgba(192,132,252,0.1))", border: "1px solid rgba(192,132,252,0.4)", borderRadius: "12px", padding: "16px", textAlign: "center", cursor: "pointer", transition: "0.2s" }} onClick={() => fileInputRef.current?.click()}>
@@ -907,14 +907,14 @@ function ClientLobby({ onDealAccepted, onBack }: {
   }, [userId, jobDescription]);
 
   return (
-    <div style={{
-      height: "100vh", width: "100vw", overflow: "hidden",
+    <div className="lobby-container" style={{
+      minHeight: "100vh", width: "100vw", overflowY: "auto",
       display: "flex", flexDirection: "column",
       background: "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(56,189,248,0.1), transparent 70%), #050508",
       color: "#f8fafc", padding: "20px 28px", boxSizing: "border-box"
     }}>
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: "12px", borderBottom: "1px solid rgba(255,255,255,0.08)", flexShrink: 0 }}>
+      <div className="lobby-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: "12px", borderBottom: "1px solid rgba(255,255,255,0.08)", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <DealRoomLogo size={28} />
           <div>
