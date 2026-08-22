@@ -1,6 +1,6 @@
 """High-Performance Text-to-Speech Engine with Behavioral Game-Theoretic Prosody Modulation and Symbol Sanitization."""
 import httpx
-import edge_tts
+import edge_tts  # type: ignore
 import base64
 import logging
 import re
