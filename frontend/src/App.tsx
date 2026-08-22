@@ -106,61 +106,100 @@ interface TurnWithAudio extends NegotiationTurn {
 function RoleSelectScreen({ onSelectRole }: { onSelectRole: (role: "freelancer" | "client") => void }) {
   const [hoveredRole, setHoveredRole] = useState<string | null>(null);
 
+  // Read saved profiles directly from localStorage
+  const getStorageItem = (key: string) => {
+    try {
+      const v = localStorage.getItem(key);
+      return v ? JSON.parse(v) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const flName = getStorageItem("dr_fl_name") || "";
+  const flRole = getStorageItem("dr_fl_role") || "";
+  const flActive = Boolean(getStorageItem("dr_fl_active"));
+  const flUid = getStorageItem("dr_fl_uid") || "";
+
+  const clName = getStorageItem("dr_cl_name") || "";
+  const clCompany = getStorageItem("dr_cl_comp") || "";
+  const clRegistered = Boolean(getStorageItem("dr_cl_registered"));
+  const clUid = getStorageItem("dr_cl_uid") || "";
+
   return (
     <div style={{
       height: "100vh", width: "100vw", overflow: "hidden",
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
       background: "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(56,189,248,0.12), transparent 70%), radial-gradient(ellipse 60% 40% at 0% 100%, rgba(192,132,252,0.08), transparent 60%), radial-gradient(ellipse 60% 40% at 100% 100%, rgba(56,189,248,0.08), transparent 60%), #050508",
-      color: "#f8fafc", gap: "40px", padding: "20px"
+      color: "#f8fafc", gap: "36px", padding: "20px"
     }}>
       {/* Logo & Title */}
       <div style={{ textAlign: "center" }}>
-        <DealRoomLogo size={48} />
-        <h1 style={{ fontSize: "36px", fontWeight: 900, margin: "12px 0 4px 0", letterSpacing: "-1px" }}>
+        <DealRoomLogo size={52} />
+        <h1 style={{ fontSize: "38px", fontWeight: 900, margin: "14px 0 4px 0", letterSpacing: "-1px" }}>
           DealRoom
         </h1>
-        <p style={{ fontSize: "15px", color: "#94a3b8", margin: 0, maxWidth: "500px" }}>
+        <p style={{ fontSize: "15px", color: "#94a3b8", margin: 0, maxWidth: "520px" }}>
           Real-time freelancer & client matchmaking with AI-powered voice negotiation
         </p>
       </div>
 
       {/* Role Cards */}
-      <div style={{ display: "flex", gap: "24px" }}>
+      <div style={{ display: "flex", gap: "28px" }}>
         {/* Freelancer Card */}
         <button
           onClick={() => onSelectRole("freelancer")}
           onMouseEnter={() => setHoveredRole("freelancer")}
           onMouseLeave={() => setHoveredRole(null)}
           style={{
-            width: "280px", padding: "36px 28px",
-            background: hoveredRole === "freelancer" ? "rgba(192,132,252,0.08)" : "rgba(255,255,255,0.025)",
-            border: `1px solid ${hoveredRole === "freelancer" ? "#c084fc" : "rgba(255,255,255,0.1)"}`,
+            width: "310px", padding: "32px 26px",
+            background: hoveredRole === "freelancer" ? "rgba(192,132,252,0.1)" : "rgba(255,255,255,0.03)",
+            border: `1.5px solid ${flActive ? "#c084fc" : hoveredRole === "freelancer" ? "#c084fc" : "rgba(255,255,255,0.12)"}`,
             borderRadius: "20px", cursor: "pointer", color: "#f8fafc",
-            display: "flex", flexDirection: "column", alignItems: "center", gap: "16px",
+            display: "flex", flexDirection: "column", alignItems: "center", gap: "14px",
             transition: "all 0.3s ease",
-            boxShadow: hoveredRole === "freelancer" ? "0 0 40px rgba(192,132,252,0.2)" : "none",
+            boxShadow: flActive ? "0 0 35px rgba(192,132,252,0.25)" : hoveredRole === "freelancer" ? "0 0 30px rgba(192,132,252,0.18)" : "none",
             transform: hoveredRole === "freelancer" ? "translateY(-4px)" : "none"
           }}
         >
           <div style={{
-            width: "64px", height: "64px", borderRadius: "16px",
-            background: "rgba(192,132,252,0.15)", border: "1px solid rgba(192,132,252,0.3)",
+            width: "60px", height: "60px", borderRadius: "16px",
+            background: "rgba(192,132,252,0.15)", border: "1px solid rgba(192,132,252,0.35)",
             display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px"
           }}>💼</div>
-          <div style={{ textAlign: "center" }}>
-            <h2 style={{ fontSize: "20px", fontWeight: 800, margin: "0 0 6px 0" }}>I'm a Freelancer</h2>
-            <p style={{ fontSize: "12.5px", color: "#94a3b8", margin: 0, lineHeight: 1.4 }}>
-              Post your skills & rates. Wait for clients to send you deal invites. Negotiate your worth.
+          
+          <div style={{ textAlign: "center", width: "100%" }}>
+            <h2 style={{ fontSize: "20px", fontWeight: 800, margin: "0 0 4px 0" }}>I'm a Freelancer</h2>
+            <p style={{ fontSize: "12px", color: "#94a3b8", margin: 0, lineHeight: 1.4 }}>
+              Post skills, upload CV, and let AI negotiate your contracts
             </p>
           </div>
+
+          {/* Registered Profile Badge Preview */}
+          {flActive && flName ? (
+            <div style={{ width: "100%", padding: "10px 12px", borderRadius: "10px", background: "rgba(192,132,252,0.12)", border: "1px solid rgba(192,132,252,0.3)", textAlign: "left" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2px" }}>
+                <span style={{ fontSize: "10px", fontWeight: 800, color: "#c084fc", letterSpacing: "0.5px" }}>🟢 ACTIVE IN POOL</span>
+                <span style={{ fontSize: "9px", color: "#94a3b8" }}>{flUid}</span>
+              </div>
+              <div style={{ fontSize: "13px", fontWeight: 800, color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{flName}</div>
+              <div style={{ fontSize: "11px", color: "#cbd5e1", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{flRole || "Senior Specialist"}</div>
+            </div>
+          ) : flName ? (
+            <div style={{ width: "100%", padding: "8px 12px", borderRadius: "10px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", textAlign: "left" }}>
+              <span style={{ fontSize: "9.5px", fontWeight: 800, color: "#94a3b8" }}>SAVED DRAFT</span>
+              <div style={{ fontSize: "12.5px", fontWeight: 700, color: "#ffffff" }}>{flName}</div>
+            </div>
+          ) : null}
+
           <span style={{
-            fontSize: "12px", fontWeight: 800, padding: "6px 16px", borderRadius: "20px",
-            background: hoveredRole === "freelancer" ? "#c084fc" : "rgba(255,255,255,0.06)",
-            color: hoveredRole === "freelancer" ? "#000" : "#cbd5e1",
-            border: `1px solid ${hoveredRole === "freelancer" ? "#c084fc" : "rgba(255,255,255,0.15)"}`,
-            transition: "all 0.2s ease"
+            fontSize: "12px", fontWeight: 800, padding: "8px 18px", borderRadius: "20px",
+            background: flActive ? "linear-gradient(135deg, #c084fc, #9333ea)" : hoveredRole === "freelancer" ? "#c084fc" : "rgba(255,255,255,0.06)",
+            color: flActive ? "#fff" : hoveredRole === "freelancer" ? "#000" : "#cbd5e1",
+            border: `1px solid ${flActive ? "#c084fc" : hoveredRole === "freelancer" ? "#c084fc" : "rgba(255,255,255,0.15)"}`,
+            transition: "all 0.2s ease", width: "85%", textAlign: "center"
           }}>
-            Enter as Freelancer →
+            {flActive ? "Resume Active Lobby →" : "Enter as Freelancer →"}
           </span>
         </button>
 
@@ -170,35 +209,54 @@ function RoleSelectScreen({ onSelectRole }: { onSelectRole: (role: "freelancer" 
           onMouseEnter={() => setHoveredRole("client")}
           onMouseLeave={() => setHoveredRole(null)}
           style={{
-            width: "280px", padding: "36px 28px",
-            background: hoveredRole === "client" ? "rgba(56,189,248,0.08)" : "rgba(255,255,255,0.025)",
-            border: `1px solid ${hoveredRole === "client" ? "#38bdf8" : "rgba(255,255,255,0.1)"}`,
+            width: "310px", padding: "32px 26px",
+            background: hoveredRole === "client" ? "rgba(56,189,248,0.1)" : "rgba(255,255,255,0.03)",
+            border: `1.5px solid ${clRegistered ? "#38bdf8" : hoveredRole === "client" ? "#38bdf8" : "rgba(255,255,255,0.12)"}`,
             borderRadius: "20px", cursor: "pointer", color: "#f8fafc",
-            display: "flex", flexDirection: "column", alignItems: "center", gap: "16px",
+            display: "flex", flexDirection: "column", alignItems: "center", gap: "14px",
             transition: "all 0.3s ease",
-            boxShadow: hoveredRole === "client" ? "0 0 40px rgba(56,189,248,0.2)" : "none",
+            boxShadow: clRegistered ? "0 0 35px rgba(56,189,248,0.25)" : hoveredRole === "client" ? "0 0 30px rgba(56,189,248,0.18)" : "none",
             transform: hoveredRole === "client" ? "translateY(-4px)" : "none"
           }}
         >
           <div style={{
-            width: "64px", height: "64px", borderRadius: "16px",
-            background: "rgba(56,189,248,0.15)", border: "1px solid rgba(56,189,248,0.3)",
+            width: "60px", height: "60px", borderRadius: "16px",
+            background: "rgba(56,189,248,0.15)", border: "1px solid rgba(56,189,248,0.35)",
             display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px"
           }}>🏢</div>
-          <div style={{ textAlign: "center" }}>
-            <h2 style={{ fontSize: "20px", fontWeight: 800, margin: "0 0 6px 0" }}>I'm a Client</h2>
-            <p style={{ fontSize: "12.5px", color: "#94a3b8", margin: 0, lineHeight: 1.4 }}>
-              Post your job or RFP. Browse active freelancers. Send deal invites and negotiate terms.
+          
+          <div style={{ textAlign: "center", width: "100%" }}>
+            <h2 style={{ fontSize: "20px", fontWeight: 800, margin: "0 0 4px 0" }}>I'm a Client</h2>
+            <p style={{ fontSize: "12px", color: "#94a3b8", margin: 0, lineHeight: 1.4 }}>
+              Post RFP, search verified talent, and close terms at market equilibrium
             </p>
           </div>
+
+          {/* Registered Job Badge Preview */}
+          {clRegistered && (clCompany || clName) ? (
+            <div style={{ width: "100%", padding: "10px 12px", borderRadius: "10px", background: "rgba(56,189,248,0.12)", border: "1px solid rgba(56,189,248,0.3)", textAlign: "left" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2px" }}>
+                <span style={{ fontSize: "10px", fontWeight: 800, color: "#38bdf8", letterSpacing: "0.5px" }}>🟢 JOB POSTED & LIVE</span>
+                <span style={{ fontSize: "9px", color: "#94a3b8" }}>{clUid}</span>
+              </div>
+              <div style={{ fontSize: "13px", fontWeight: 800, color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{clCompany || clName}</div>
+              <div style={{ fontSize: "11px", color: "#cbd5e1", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{clName ? `Contact: ${clName}` : "Hiring Manager"}</div>
+            </div>
+          ) : clName ? (
+            <div style={{ width: "100%", padding: "8px 12px", borderRadius: "10px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", textAlign: "left" }}>
+              <span style={{ fontSize: "9.5px", fontWeight: 800, color: "#94a3b8" }}>SAVED DRAFT</span>
+              <div style={{ fontSize: "12.5px", fontWeight: 700, color: "#ffffff" }}>{clCompany || clName}</div>
+            </div>
+          ) : null}
+
           <span style={{
-            fontSize: "12px", fontWeight: 800, padding: "6px 16px", borderRadius: "20px",
-            background: hoveredRole === "client" ? "#38bdf8" : "rgba(255,255,255,0.06)",
-            color: hoveredRole === "client" ? "#000" : "#cbd5e1",
-            border: `1px solid ${hoveredRole === "client" ? "#38bdf8" : "rgba(255,255,255,0.15)"}`,
-            transition: "all 0.2s ease"
+            fontSize: "12px", fontWeight: 800, padding: "8px 18px", borderRadius: "20px",
+            background: clRegistered ? "linear-gradient(135deg, #38bdf8, #0284c7)" : hoveredRole === "client" ? "#38bdf8" : "rgba(255,255,255,0.06)",
+            color: clRegistered ? "#000" : hoveredRole === "client" ? "#000" : "#cbd5e1",
+            border: `1px solid ${clRegistered ? "#38bdf8" : hoveredRole === "client" ? "#38bdf8" : "rgba(255,255,255,0.15)"}`,
+            transition: "all 0.2s ease", width: "85%", textAlign: "center"
           }}>
-            Enter as Client →
+            {clRegistered ? "Resume Client Radar →" : "Enter as Client →"}
           </span>
         </button>
       </div>
