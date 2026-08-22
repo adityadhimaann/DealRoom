@@ -155,13 +155,17 @@ async def send_deal_invite(req: SendInviteRequest):
     if not invite:
         raise HTTPException(status_code=400, detail="Unable to create invite. Freelancer may not be active.")
 
-    # Push real-time notification to freelancer
+    # Push real-time notification to both freelancer and client
     await matchmaking.send_to_user(req.freelancer_id, {
         "type": "invite_received",
         "invite": invite,
     })
+    await matchmaking.send_to_user(req.client_id, {
+        "type": "invite_received",
+        "invite": invite,
+    })
 
-    return {"invite_id": invite["invite_id"], "status": "pending", "message": "Invite sent! Waiting for freelancer to accept."}
+    return {"invite_id": invite["invite_id"], "status": "pending", "message": "Invite/Proposal sent! Waiting for acceptance."}
 
 
 @router.post("/invite/accept")

@@ -43,6 +43,7 @@ import {
   type NegotiationTurn,
   type JobAnalysisResult,
   type FreelancerProfile,
+  type ClientProfileData,
   type DealInvite,
 } from "./lib/api";
 
@@ -411,6 +412,7 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
   const [isAccepting, setIsAccepting] = useState(false);
   const isAcceptingRef = useRef(false);
   const wsRef = useRef<WebSocket | null>(null);
+  const [clients, setClients] = useState<ClientProfileData[]>([]);
 
   const handleCreateNewProfile = () => {
     localStorage.removeItem("dr_fl_name");
@@ -565,23 +567,56 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
     } catch {}
     setPendingInvite(null);
   };
+  const [proposalSentId, setProposalSentId] = useState<string | null>(null);
 
+  // Poll active client job postings in real-time
   useEffect(() => {
-    if (!isActive || !userId) return;
-    const ws = new WebSocket(`${WS_BASE}/lobby/${userId}`);
-    wsRef.current = ws;
-    ws.onmessage = (e) => {
+    getActiveClients().then(res => setClients(res.clients || []));
+
+    const poll = setInterval(async () => {
       try {
-        const data = JSON.parse(e.data);
-        if (data.type === "invite_received") {
-          setPendingInvite(data.invite);
-        }
+        const res = await getActiveClients();
+        setClients(res.clients || []);
       } catch {}
-    };
-    return () => {
-      ws.close();
-    };
-  }, [isActive, userId]);
+    }, 2500);
+
+    return () => clearInterval(poll);
+  }, []);
+
+  const handleSendProposal = async (clientId: string, clientJobDesc: string) => {
+    let currentUserId = userId;
+    if (!currentUserId || !isActive) {
+      if (!displayName.trim() || !roleTitle.trim()) {
+        alert("Please fill in your Display Name and Role Title first before requesting a deal call.");
+        return;
+      }
+      try {
+        const result = await registerFreelancer({
+          display_name: displayName.trim(),
+          role_title: roleTitle.trim(),
+          skills: skillsText.split(",").map(s => s.trim()).filter(Boolean),
+          min_rate: minRate,
+          max_rate: maxRate,
+          currency,
+          job_text: jobText.trim(),
+        });
+        currentUserId = result.user_id;
+        setUserId(result.user_id);
+        setIsActive(true);
+      } catch (e) {
+        currentUserId = `fl_${Math.random().toString(36).substring(2, 9)}`;
+        setUserId(currentUserId);
+      }
+    }
+
+    try {
+      await sendDealInvite(clientId, currentUserId, clientJobDesc);
+      setProposalSentId(clientId);
+      alert("Deal Call Proposal sent to Client! Waiting for client to accept...");
+    } catch (err: any) {
+      alert("Failed to send proposal: " + err.message);
+    }
+  };
 
   return (
     <div className="lobby-container" style={{
@@ -599,7 +634,7 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
               <span style={{ fontSize: "16px", fontWeight: 900 }}>Freelancer Lobby</span>
               <span style={{ fontSize: "10px", fontWeight: 800, padding: "2px 8px", borderRadius: "12px", background: "rgba(192,132,252,0.15)", border: "1px solid rgba(192,132,252,0.3)", color: "#c084fc" }}>💼 FREELANCER MODE</span>
             </div>
-            <p style={{ fontSize: "11px", color: "#64748b", margin: "2px 0 0 0" }}>Set your profile, go active, and wait for client deal invites</p>
+            <p style={{ fontSize: "11px", color: "#64748b", margin: "2px 0 0 0" }}>Set your profile, browse active client RFPs, and request instant AI deal calls</p>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -678,31 +713,18 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
           )}
         </div>
 
-        {/* Status / Waiting Panel */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.015)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "14px", padding: "30px", position: "relative" }}>
-          {!isActive ? (
-            <div style={{ textAlign: "center", color: "#64748b" }}>
-              <div style={{ fontSize: "48px", marginBottom: "12px" }}>💼</div>
-              <p style={{ fontSize: "15px", fontWeight: 700 }}>Fill your profile and go active</p>
-              <p style={{ fontSize: "12px" }}>Once active, clients will be able to find you and send deal invites</p>
-            </div>
-          ) : !pendingInvite ? (
-            <div style={{ textAlign: "center" }}>
-              <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: "rgba(192,132,252,0.1)", border: "2px solid rgba(192,132,252,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", animation: "pulse 2s infinite" }}>
-                <span style={{ fontSize: "28px" }}>📡</span>
-              </div>
-              <p style={{ fontSize: "16px", fontWeight: 800, color: "#ffffff" }}>Waiting for client invites...</p>
-              <p style={{ fontSize: "12px", color: "#94a3b8", maxWidth: "340px" }}>Your profile is live in the matchmaking pool. When a client sends you a deal invite, it will appear here instantly.</p>
-            </div>
-          ) : (
-            /* Invite Notification Modal */
-            <div style={{ width: "100%", maxWidth: "480px", background: "rgba(56,189,248,0.06)", border: "1px solid rgba(56,189,248,0.3)", borderRadius: "16px", padding: "24px", boxShadow: "0 0 40px rgba(56,189,248,0.15)", animation: "pulse 1.5s ease-in-out 1" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
+        {/* Right Panel: Live Client Job Postings & Invite Notifications */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "16px", position: "relative" }}>
+
+          {/* Pending Invite Modal Banner */}
+          {pendingInvite && (
+            <div style={{ width: "100%", background: "rgba(56,189,248,0.08)", border: "1.5px solid rgba(56,189,248,0.4)", borderRadius: "16px", padding: "20px 24px", boxShadow: "0 0 40px rgba(56,189,248,0.2)", animation: "pulse 1.5s ease-in-out 1" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
                 <span style={{ fontSize: "24px" }}>🔔</span>
-                <span style={{ fontSize: "16px", fontWeight: 900, color: "#38bdf8" }}>New Deal Invite!</span>
+                <span style={{ fontSize: "16px", fontWeight: 900, color: "#38bdf8" }}>New Deal Invite Received!</span>
               </div>
               
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "20px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "16px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span style={{ fontSize: "11px", color: "#94a3b8", fontWeight: 700 }}>FROM</span>
                   <span style={{ fontSize: "13px", fontWeight: 800, color: "#ffffff" }}>{pendingInvite.client_name} {pendingInvite.client_company ? `(${pendingInvite.client_company})` : ""}</span>
@@ -712,7 +734,7 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
                   <span style={{ fontSize: "13px", fontWeight: 800, color: "#4ade80" }}>{pendingInvite.currency}{pendingInvite.budget_min.toLocaleString()} – {pendingInvite.currency}{pendingInvite.budget_max.toLocaleString()}</span>
                 </div>
                 {pendingInvite.job_description && (
-                  <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: "8px", padding: "10px 12px", fontSize: "12px", color: "#cbd5e1", lineHeight: 1.4, maxHeight: "120px", overflowY: "auto" }}>
+                  <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: "8px", padding: "10px 12px", fontSize: "12px", color: "#cbd5e1", lineHeight: 1.4, maxHeight: "100px", overflowY: "auto" }}>
                     {pendingInvite.job_description.substring(0, 500)}
                   </div>
                 )}
@@ -730,9 +752,74 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
               </div>
             </div>
           )}
+
+          {/* Client Job RFPs Feed */}
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "14px", background: "rgba(255,255,255,0.015)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "14px", padding: "18px", overflow: "hidden" }}>
+            
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 800 }}>🏢 Active Client RFPs & Job Postings</h3>
+                <p style={{ margin: "2px 0 0 0", fontSize: "11px", color: "#94a3b8" }}>Browse posted client requirements and request an instant AI voice negotiation call</p>
+              </div>
+              <span style={{ fontSize: "11px", fontWeight: 800, padding: "3px 10px", borderRadius: "12px", background: "rgba(56,189,248,0.15)", border: "1px solid rgba(56,189,248,0.3)", color: "#38bdf8" }}>
+                {clients.length} LIVE JOBS
+              </span>
+            </div>
+
+            {/* Client Cards Grid */}
+            <div style={{ flex: 1, overflowY: "auto", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "12px", alignContent: "start", paddingRight: "4px" }}>
+              {clients.length === 0 ? (
+                <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "50px 20px", color: "#64748b" }}>
+                  <div style={{ fontSize: "40px", marginBottom: "10px" }}>📡</div>
+                  <p style={{ fontSize: "15px", fontWeight: 800, color: "#94a3b8" }}>No Client Jobs Posted Yet</p>
+                  <p style={{ fontSize: "12px", color: "#64748b", maxWidth: "320px", margin: "4px auto 0 auto" }}>When clients post RFP requirements, their budgets and job details will appear here in real-time.</p>
+                </div>
+              ) : (
+                clients.map(cl => (
+                  <div key={cl.user_id} className="glass-card" style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "10px", border: "1px solid rgba(56,189,248,0.2)", borderRadius: "12px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <div>
+                        <h4 style={{ margin: 0, fontSize: "14px", fontWeight: 800, color: "#ffffff" }}>{cl.display_name}</h4>
+                        <span style={{ fontSize: "11px", color: "#38bdf8", fontWeight: 700 }}>{cl.company || "Enterprise Client"}</span>
+                      </div>
+                      <span style={{ fontSize: "9px", color: "#64748b", fontWeight: 700 }}>{cl.user_id}</span>
+                    </div>
+
+                    <div style={{ fontSize: "12px", color: "#cbd5e1", background: "rgba(255,255,255,0.03)", padding: "8px 10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.06)", maxHeight: "90px", overflowY: "auto", lineHeight: 1.4 }}>
+                      {cl.job_description || "No specific job description provided."}
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto", paddingTop: "6px" }}>
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <span style={{ fontSize: "9.5px", color: "#94a3b8", fontWeight: 800, textTransform: "uppercase" }}>BUDGET</span>
+                        <span style={{ fontSize: "13px", fontWeight: 900, color: "#4ade80" }}>
+                          {cl.currency || "$"}{(cl.budget_min || 0).toLocaleString()} – {cl.currency || "$"}{(cl.budget_max || 0).toLocaleString()}
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => handleSendProposal(cl.user_id, cl.job_description)}
+                        disabled={proposalSentId === cl.user_id}
+                        style={{
+                          padding: "8px 14px", borderRadius: "8px",
+                          background: proposalSentId === cl.user_id ? "rgba(74,222,128,0.15)" : "#38bdf8",
+                          color: proposalSentId === cl.user_id ? "#4ade80" : "#000",
+                          border: proposalSentId === cl.user_id ? "1px solid rgba(74,222,128,0.3)" : "none",
+                          fontWeight: 800, fontSize: "11.5px", cursor: proposalSentId === cl.user_id ? "default" : "pointer",
+                          boxShadow: proposalSentId === cl.user_id ? "none" : "0 4px 14px rgba(56,189,248,0.3)"
+                        }}
+                      >
+                        {proposalSentId === cl.user_id ? "✓ Proposal Sent" : "Request Deal Call →"}
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+          </div>
         </div>
       </div>
-
     </div>
   );
 }
