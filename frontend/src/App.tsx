@@ -47,6 +47,42 @@ import {
   type DealInvite,
 } from "./lib/api";
 
+// Helper for Mobile & Desktop Web Notifications + Web Audio Chime Alert
+const triggerNotification = (title: string, body: string) => {
+  // 1. Web Audio Chime Alert (Synthesizer ring melody)
+  try {
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+    osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15); // A5
+    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.35);
+  } catch (e) {}
+
+  // 2. HTML5 Web Browser / Mobile Phone System Notification
+  if ("Notification" in window) {
+    if (Notification.permission === "granted") {
+      try {
+        new Notification(title, { body, tag: "dealroom-notification" });
+      } catch (e) {}
+    } else if (Notification.permission !== "denied") {
+      Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+          try {
+            new Notification(title, { body, tag: "dealroom-notification" });
+          } catch (e) {}
+        }
+      });
+    }
+  }
+};
+
 // ── Persistence Hook ──────────────────────────────────────────
 function useLocalStorageState<T>(key: string, defaultValue: T): [T, (val: T) => void] {
   const [state, setState] = useState<T>(() => {
@@ -531,10 +567,13 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
           const data = JSON.parse(e.data);
           if (data.type === "invite_received") {
             setPendingInvite(data.invite);
+            triggerNotification("📩 Deal Call Invitation Received!", `Client (${data.invite.client_name || data.invite.client_company || 'Enterprise Client'}) invited you to a live AI Deal Room negotiation!`);
           } else if (data.type === "invite_accepted") {
+            triggerNotification("🎉 Deal Call Accepted!", "Client accepted your proposal! Connecting to AI Deal Room...");
             onDealAccepted(data.invite, result.user_id);
           } else if (data.type === "invite_declined") {
             setProposalSentId(null);
+            triggerNotification("❌ Proposal Declined", "The client declined your deal call request.");
             alert("The client declined your deal call request.");
           }
         } catch {}
@@ -623,10 +662,13 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
           const data = JSON.parse(e.data);
           if (data.type === "invite_received") {
             setPendingInvite(data.invite);
+            triggerNotification("📩 Deal Call Invitation Received!", `Client (${data.invite.client_name || data.invite.client_company || 'Enterprise Client'}) invited you to a deal call!`);
           } else if (data.type === "invite_accepted") {
+            triggerNotification("🎉 Deal Call Accepted!", "Client accepted your proposal! Connecting to AI Deal Room...");
             onDealAccepted(data.invite, currentUserId!);
           } else if (data.type === "invite_declined") {
             setProposalSentId(null);
+            triggerNotification("❌ Proposal Declined", "The client declined your deal call request.");
             alert("The client declined your deal call request.");
           }
         } catch {}
@@ -649,6 +691,60 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
       background: "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(192,132,252,0.1), transparent 70%), #050508",
       color: "#f8fafc", padding: "20px 28px", boxSizing: "border-box"
     }}>
+      {/* 📩 Pending Client Deal Call Invitation Modal Banner */}
+      {pendingInvite && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.85)",
+          backdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px"
+        }}>
+          <div style={{
+            background: "#0c0d14", border: "1px solid rgba(192,132,252,0.5)", borderRadius: "24px",
+            padding: "32px", maxWidth: "480px", width: "100%", textAlign: "center",
+            boxShadow: "0 0 60px rgba(192,132,252,0.3)"
+          }}>
+            <div style={{ fontSize: "48px", marginBottom: "12px" }}>📩</div>
+            <h3 style={{ fontSize: "22px", fontWeight: 900, color: "#fff", margin: "0 0 8px 0" }}>
+              Deal Call Invitation Received!
+            </h3>
+            <p style={{ fontSize: "13px", color: "#94a3b8", marginBottom: "20px", lineHeight: "1.6" }}>
+              Client <strong>({pendingInvite.client_name || pendingInvite.client_company || "Enterprise Client"})</strong> has invited you to an instant live AI Deal Room voice negotiation!
+            </p>
+            <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", padding: "14px", marginBottom: "24px", textAlign: "left" }}>
+              <div style={{ fontSize: "11px", fontWeight: 800, color: "#c084fc", textTransform: "uppercase", marginBottom: "4px" }}>JOB REQUIREMENT / BUDGET</div>
+              <div style={{ fontSize: "13px", color: "#e2e8f0", marginBottom: "6px" }}>
+                {pendingInvite.job_description || "Technical SOW Negotiation"}
+              </div>
+              <div style={{ fontSize: "12px", color: "#4ade80", fontWeight: 800 }}>
+                Target Budget: {pendingInvite.currency || "$"}{(pendingInvite.budget_min || 0).toLocaleString()} – {pendingInvite.currency || "$"}{(pendingInvite.budget_max || 0).toLocaleString()}
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+              <button
+                onClick={handleDeclineInvite}
+                style={{
+                  flex: 1, padding: "14px 20px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.15)",
+                  background: "rgba(255,255,255,0.05)", color: "#94a3b8", fontWeight: 700, cursor: "pointer", fontSize: "13px"
+                }}
+              >
+                Decline
+              </button>
+              <button
+                onClick={handleAcceptInvite}
+                disabled={isAccepting}
+                style={{
+                  flex: 2, padding: "14px 24px", borderRadius: "12px", border: "none",
+                  background: "linear-gradient(135deg, #c084fc, #a855f7)", color: "#fff",
+                  fontWeight: 900, fontSize: "14px", cursor: isAccepting ? "wait" : "pointer",
+                  boxShadow: "0 4px 24px rgba(192,132,252,0.4)"
+                }}
+              >
+                {isAccepting ? "⏳ Connecting Call..." : "📞 Accept & Join Deal Call →"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="lobby-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: "12px", borderBottom: "1px solid rgba(255,255,255,0.08)", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -1018,11 +1114,14 @@ function ClientLobby({ onDealAccepted, onBack }: {
           setFreelancers(data.freelancers || []);
         } else if (data.type === "invite_received") {
           setPendingInvite(data.invite);
+          triggerNotification("📩 Deal Call Requested!", `Freelancer (${data.invite.freelancer_name || data.invite.freelancer_role || 'Applicant'}) submitted a proposal and requested an instant AI Deal Call!`);
         } else if (data.type === "invite_accepted") {
+          triggerNotification("🎉 Deal Call Accepted!", "Freelancer accepted your invite! Connecting to AI Deal Room...");
           setAcceptedInviteForCall(data.invite);
         } else if (data.type === "invite_declined") {
           setInviteSent(null);
           setWaitingForAccept(false);
+          triggerNotification("❌ Invite Declined", "The freelancer declined your invite.");
           alert("The proposal/invite was declined.");
         }
       } catch {}
@@ -1098,11 +1197,14 @@ function ClientLobby({ onDealAccepted, onBack }: {
             setFreelancers(data.freelancers || []);
           } else if (data.type === "invite_received") {
             setPendingInvite(data.invite);
+            triggerNotification("📩 Deal Call Requested!", `Freelancer (${data.invite.freelancer_name || data.invite.freelancer_role || 'Applicant'}) submitted a proposal and requested an instant AI Deal Call!`);
           } else if (data.type === "invite_accepted") {
+            triggerNotification("🎉 Deal Call Accepted!", "Freelancer accepted your invite! Connecting to AI Deal Room...");
             setAcceptedInviteForCall(data.invite);
           } else if (data.type === "invite_declined") {
             setInviteSent(null);
             setWaitingForAccept(false);
+            triggerNotification("❌ Invite Declined", "The freelancer declined your invite.");
             alert("The proposal/invite was declined.");
           }
         } catch {}
@@ -1167,11 +1269,14 @@ function ClientLobby({ onDealAccepted, onBack }: {
             setFreelancers(data.freelancers || []);
           } else if (data.type === "invite_received") {
             setPendingInvite(data.invite);
+            triggerNotification("📩 Deal Call Requested!", `Freelancer (${data.invite.freelancer_name || data.invite.freelancer_role || 'Applicant'}) submitted a proposal and requested an instant AI Deal Call!`);
           } else if (data.type === "invite_accepted") {
+            triggerNotification("🎉 Deal Call Accepted!", "Freelancer accepted your invite! Connecting to AI Deal Room...");
             setAcceptedInviteForCall(data.invite);
           } else if (data.type === "invite_declined") {
             setInviteSent(null);
             setWaitingForAccept(false);
+            triggerNotification("❌ Invite Declined", "The freelancer declined your invite.");
             alert("The proposal/invite was declined.");
           }
         } catch {}
