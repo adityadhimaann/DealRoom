@@ -387,9 +387,14 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
             <p style={{ fontSize: "11px", color: "#64748b", margin: "2px 0 0 0" }}>Set your profile, go active, and wait for client deal invites</p>
           </div>
         </div>
-        <button onClick={handleBack} style={{ padding: "6px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "#cbd5e1", fontSize: "11.5px", fontWeight: 700, cursor: "pointer" }}>
-          ← Back to Role Select
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <button onClick={handleCreateNewProfile} style={{ padding: "6px 14px", borderRadius: "8px", background: "rgba(192,132,252,0.18)", border: "1px solid rgba(192,132,252,0.45)", color: "#e9d5ff", fontSize: "11.5px", fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: "5px", boxShadow: "0 0 15px rgba(192,132,252,0.2)" }}>
+            <span>➕</span> New Profile
+          </button>
+          <button onClick={handleBack} style={{ padding: "6px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "#cbd5e1", fontSize: "11.5px", fontWeight: 700, cursor: "pointer" }}>
+            ← Back to Role Select
+          </button>
+        </div>
       </div>
 
       {/* Main Content */}
@@ -731,9 +736,14 @@ function ClientLobby({ onDealAccepted, onBack }: {
             <p style={{ fontSize: "11px", color: "#64748b", margin: "2px 0 0 0" }}>Post your job, browse freelancers, and send deal invites</p>
           </div>
         </div>
-        <button onClick={handleBack} style={{ padding: "6px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "#cbd5e1", fontSize: "11.5px", fontWeight: 700, cursor: "pointer" }}>
-          ← Back to Role Select
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <button onClick={handleCreateNewJob} style={{ padding: "6px 14px", borderRadius: "8px", background: "rgba(56,189,248,0.18)", border: "1px solid rgba(56,189,248,0.45)", color: "#bae6fd", fontSize: "11.5px", fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: "5px", boxShadow: "0 0 15px rgba(56,189,248,0.2)" }}>
+            <span>➕</span> New Job Posting
+          </button>
+          <button onClick={handleBack} style={{ padding: "6px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "#cbd5e1", fontSize: "11.5px", fontWeight: 700, cursor: "pointer" }}>
+            ← Back to Role Select
+          </button>
+        </div>
       </div>
 
       <div style={{ flex: 1, display: "flex", gap: "20px", marginTop: "16px", overflow: "hidden" }}>
