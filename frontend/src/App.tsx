@@ -179,14 +179,23 @@ function RoleSelectScreen({ onSelectRole }: { onSelectRole: (role: "freelancer" 
           localStorage.setItem("dr_fl_name", JSON.stringify(found.display_name));
           localStorage.setItem("dr_fl_role", JSON.stringify(found.role_title));
           localStorage.setItem("dr_fl_active", JSON.stringify(true));
+        } else {
+          // Stale profile in local storage no longer in DB — purge!
+          setFlState({ name: "", role: "", active: false, uid: "" });
+          localStorage.removeItem("dr_fl_name");
+          localStorage.removeItem("dr_fl_role");
+          localStorage.removeItem("dr_fl_active");
+          localStorage.removeItem("dr_fl_uid");
         }
       } else if (list.length > 0) {
         const latest = list[list.length - 1];
         setFlState({ name: latest.display_name, role: latest.role_title, active: true, uid: latest.user_id });
-        localStorage.setItem("dr_fl_name", JSON.stringify(latest.display_name));
-        localStorage.setItem("dr_fl_role", JSON.stringify(latest.role_title));
-        localStorage.setItem("dr_fl_active", JSON.stringify(true));
-        localStorage.setItem("dr_fl_uid", JSON.stringify(latest.user_id));
+      } else {
+        setFlState({ name: "", role: "", active: false, uid: "" });
+        localStorage.removeItem("dr_fl_name");
+        localStorage.removeItem("dr_fl_role");
+        localStorage.removeItem("dr_fl_active");
+        localStorage.removeItem("dr_fl_uid");
       }
     }).catch(() => {});
 
@@ -201,15 +210,25 @@ function RoleSelectScreen({ onSelectRole }: { onSelectRole: (role: "freelancer" 
           localStorage.setItem("dr_cl_comp", JSON.stringify(found.company));
           localStorage.setItem("dr_cl_desc", JSON.stringify(found.job_description || ""));
           localStorage.setItem("dr_cl_registered", JSON.stringify(true));
+        } else {
+          // Stale profile in local storage no longer in DB — purge!
+          setClState({ name: "", company: "", registered: false, uid: "" });
+          localStorage.removeItem("dr_cl_name");
+          localStorage.removeItem("dr_cl_comp");
+          localStorage.removeItem("dr_cl_desc");
+          localStorage.removeItem("dr_cl_registered");
+          localStorage.removeItem("dr_cl_uid");
         }
       } else if (list.length > 0) {
         const latest = list[list.length - 1];
         setClState({ name: latest.display_name, company: latest.company, registered: true, uid: latest.user_id });
-        localStorage.setItem("dr_cl_name", JSON.stringify(latest.display_name));
-        localStorage.setItem("dr_cl_comp", JSON.stringify(latest.company));
-        localStorage.setItem("dr_cl_desc", JSON.stringify(latest.job_description || ""));
-        localStorage.setItem("dr_cl_registered", JSON.stringify(true));
-        localStorage.setItem("dr_cl_uid", JSON.stringify(latest.user_id));
+      } else {
+        setClState({ name: "", company: "", registered: false, uid: "" });
+        localStorage.removeItem("dr_cl_name");
+        localStorage.removeItem("dr_cl_comp");
+        localStorage.removeItem("dr_cl_desc");
+        localStorage.removeItem("dr_cl_registered");
+        localStorage.removeItem("dr_cl_uid");
       }
     }).catch(() => {});
   }, []);
@@ -410,6 +429,31 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
     setIsActive(false);
     setPendingInvite(null);
   };
+
+  // Verify & Sync freelancer profile with backend database on mount
+  useEffect(() => {
+    if (userId) {
+      getFreelancerProfile(userId)
+        .then(profile => {
+          if (profile) {
+            if (profile.display_name) setDisplayName(profile.display_name);
+            if (profile.role_title) setRoleTitle(profile.role_title);
+            if (profile.skills) setSkillsText(Array.isArray(profile.skills) ? profile.skills.join(", ") : profile.skills);
+            if (profile.min_rate) setMinRate(profile.min_rate);
+            if (profile.max_rate) setMaxRate(profile.max_rate);
+            if (profile.job_text) setJobText(profile.job_text);
+            if (profile.projects) setProjects(profile.projects);
+            if (profile.years_of_experience) setExperience(profile.years_of_experience);
+            if (profile.education) setEducation(profile.education);
+            setIsActive(true);
+          }
+        })
+        .catch(() => {
+          // Stale profile in local storage no longer in DB — reset!
+          handleCreateNewProfile();
+        });
+    }
+  }, [userId]);
 
   // Auto-connect WebSocket on mount if already active
   useEffect(() => {
@@ -740,6 +784,27 @@ function ClientLobby({ onDealAccepted, onBack }: {
   const [inviteSent, setInviteSent] = useState<string | null>(null);
   const [waitingForAccept, setWaitingForAccept] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
+
+  // Verify & Sync client profile with backend database on mount
+  useEffect(() => {
+    if (userId) {
+      getClientProfile(userId)
+        .then(client => {
+          if (client) {
+            if (client.display_name) setDisplayName(client.display_name);
+            if (client.company) setCompany(client.company);
+            if (client.job_description) setJobDescription(client.job_description);
+            if (client.budget_min) setBudgetMin(client.budget_min);
+            if (client.budget_max) setBudgetMax(client.budget_max);
+            setIsRegistered(true);
+          }
+        })
+        .catch(() => {
+          // Stale profile in local storage no longer in DB — reset!
+          handleCreateNewJob();
+        });
+    }
+  }, [userId]);
 
   // Auto-connect WebSocket and polling on mount if already registered
   useEffect(() => {
