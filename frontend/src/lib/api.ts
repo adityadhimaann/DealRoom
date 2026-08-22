@@ -57,6 +57,12 @@ export interface JobAnalysisResult {
 
 // ── Matchmaking Lobby Types ──────────────────────────────────
 
+export interface CVProject {
+  name: str;
+  description: str;
+  year: str;
+}
+
 export interface FreelancerProfile {
   user_id: string;
   display_name: string;
@@ -68,7 +74,10 @@ export interface FreelancerProfile {
   job_text: string;
   avatar_color: string;
   status: string;
-  registered_at?: string;
+  projects?: CVProject[];
+  years_of_experience?: number;
+  education?: string;
+  match_score?: number;
 }
 
 export interface ClientProfileData {

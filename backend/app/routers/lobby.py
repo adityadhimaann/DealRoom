@@ -2,10 +2,12 @@
 import logging
 import asyncio
 from typing import Optional
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException
+from typing import Optional
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException, UploadFile, File
 from pydantic import BaseModel
 
 from app.services.matchmaking_service import matchmaking
+from app.services.cv_service import cv_service
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +26,9 @@ class RegisterFreelancerRequest(BaseModel):
     currency: str = "$"
     job_text: str = ""
     avatar_color: str = "#c084fc"
+    projects: list[dict] = []
+    years_of_experience: int = 0
+    education: str = ""
 
 
 class RegisterClientRequest(BaseModel):
@@ -46,6 +51,25 @@ class InviteResponseRequest(BaseModel):
     invite_id: str
 
 
+
+@router.post("/upload-cv")
+async def upload_cv(file: UploadFile = File(...)):
+    """Extract text from CV PDF and parse into structured profile data."""
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Only PDF files are currently supported for CV upload.")
+    
+    file_bytes = await file.read()
+    try:
+        text = cv_service.extract_text_from_pdf(file_bytes)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+        
+    try:
+        structured_data = cv_service.parse_cv_to_structured_data(text)
+        return structured_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to analyze CV data.")
+
 @router.post("/register/freelancer")
 async def register_freelancer(req: RegisterFreelancerRequest):
     """Register a freelancer profile and go active in the matchmaking pool."""
@@ -67,9 +91,9 @@ async def register_client(req: RegisterClientRequest):
 
 
 @router.get("/freelancers")
-async def list_active_freelancers():
-    """List all currently active freelancer profiles."""
-    freelancers = matchmaking.get_active_freelancers()
+async def list_active_freelancers(job_description: Optional[str] = None):
+    """List all currently active freelancer profiles, optionally matched against a job."""
+    freelancers = matchmaking.get_active_freelancers(job_description=job_description)
     return {"freelancers": freelancers, "count": len(freelancers)}
 
 

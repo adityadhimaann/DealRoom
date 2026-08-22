@@ -100,6 +100,11 @@ class JobAnalysisResponse(BaseModel):
 
 # ── Matchmaking & Lobby Models ────────────────────────────────────
 
+class CVProject(BaseModel):
+    name: str = ""
+    description: str = ""
+    year: str = ""
+
 class FreelancerProfile(BaseModel):
     """Active freelancer profile in the matchmaking registry."""
     user_id: str = ""
@@ -112,6 +117,12 @@ class FreelancerProfile(BaseModel):
     job_text: str = Field(default="", description="Pasted SOW / job description / portfolio summary")
     avatar_color: str = Field(default="#c084fc", description="Avatar accent color hex")
     status: str = Field(default="active", description="active | in_deal | offline")
+    
+    # CV Intelligence fields
+    projects: List[CVProject] = Field(default_factory=list)
+    years_of_experience: int = Field(default=0)
+    education: str = Field(default="")
+    match_score: Optional[float] = Field(default=None, description="Match score for client lobby")
 
 
 class ClientProfile(BaseModel):

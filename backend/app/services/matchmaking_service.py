@@ -49,12 +49,47 @@ class MatchmakingService:
 
     # ── Queries ───────────────────────────────────────────────
 
-    def get_active_freelancers(self) -> List[dict]:
-        """Return all freelancers with status='active' (not in_deal or offline)."""
-        return [
+    def get_active_freelancers(self, job_description: str = "") -> List[dict]:
+        """Return all freelancers, optionally scoring them against a job description."""
+        freelancers = [
             f for f in self.freelancers.values()
             if f.get("status") == "active"
         ]
+        
+        if not job_description or not job_description.strip():
+            for f in freelancers:
+                f["match_score"] = None
+            return freelancers
+            
+        job_lower = job_description.lower()
+        
+        for f in freelancers:
+            score = 0.0
+            
+            # 1. Skill overlap
+            skills = [s.lower() for s in f.get("skills", [])]
+            matched_skills = [s for s in skills if s in job_lower]
+            if skills:
+                score += (len(matched_skills) / len(skills)) * 50
+                
+            # 2. Project overlap (very simple keyword match for now to be fast)
+            projects = f.get("projects", [])
+            for p in projects:
+                if isinstance(p, dict):
+                    desc = p.get("description", "").lower()
+                    # Check if any significant word from job is in project description
+                    job_words = set(w for w in job_lower.split() if len(w) > 4)
+                    desc_words = set(w for w in desc.split() if len(w) > 4)
+                    overlap = job_words.intersection(desc_words)
+                    if overlap:
+                        score += min(20, len(overlap) * 5)
+                        
+            # Cap at 98%
+            f["match_score"] = min(98.0, round(score + 15, 1))
+            
+        # Sort by match score descending
+        freelancers.sort(key=lambda x: x.get("match_score", 0), reverse=True)
+        return freelancers
 
     def get_active_clients(self) -> List[dict]:
         """Return all clients with status='active'."""

@@ -23,6 +23,7 @@ NEGOTIATION CONSTRAINTS:
 - Deliverables Scope: {deliverables}
 - Priorities: {priorities}
 - Behavioral Style: {strategy}
+- CV / Technical Expertise: {context}
 
 CRITICAL RULES AGAINST DEADLOCK & VALUE DESTRUCTION:
 1. NEVER COUNTER BELOW OPPONENT'S CURRENT BID: If your opponent is already offering {currency}7,375, you MUST NEVER counter lower (e.g. {currency}6,332). Either accept their offer with scope terms or counter higher.
@@ -100,13 +101,14 @@ class AgentService:
         return EXECUTIVE_SYSTEM_PROMPT.format(
             role_name=config.role_name,
             subject=subject,
-            deliverables=deliv_str,
             currency=currency,
             ideal_price=config.ideal_price,
             min_price=config.min_price,
-            priorities=", ".join(config.priorities) if config.priorities else "milestone escrow, test coverage, sprint deliverables",
-            strategy=config.strategy.value if hasattr(config.strategy, "value") else str(config.strategy),
-            whisper_instructions=whisper,
+            deliverables=deliv_str,
+            priorities=", ".join(config.priorities) if config.priorities else "Speed, Quality",
+            strategy=config.strategy.value.upper() if hasattr(config.strategy, "value") else str(config.strategy).upper(),
+            context=config.context,
+            whisper_instructions=whisper
         )
 
     def _build_conversation_history(self, turns: list, current_agent: str) -> list[dict]:
