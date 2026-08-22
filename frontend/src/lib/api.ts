@@ -1,16 +1,15 @@
 /** API client for DealRoom backend. */
 
 // Dynamic Production & Local Environment Config
+const PROD_BACKEND_HOST = "dealroom-backend-rvdv.onrender.com";
+
 const rawApi = import.meta.env.VITE_API_BASE || "";
 const rawWs = import.meta.env.VITE_WS_BASE || "";
 
-const API_BASE = rawApi || (typeof window !== "undefined" && window.location.hostname !== "localhost" 
-  ? `https://${window.location.hostname}/api` 
-  : "http://localhost:10000/api");
+const isLocalhost = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
 
-export const WS_BASE = rawWs || (typeof window !== "undefined" && window.location.hostname !== "localhost"
-  ? `wss://${window.location.hostname}/ws`
-  : "ws://localhost:10000/ws");
+const API_BASE = rawApi || (isLocalhost ? "http://localhost:10000/api" : `https://${PROD_BACKEND_HOST}/api`);
+export const WS_BASE = rawWs || (isLocalhost ? "ws://localhost:10000/ws" : `wss://${PROD_BACKEND_HOST}/ws`);
 
 export interface AgentConfig {
   role_name: string;
