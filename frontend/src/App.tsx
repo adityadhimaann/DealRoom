@@ -28,6 +28,7 @@ import {
   analyzeJob,
   extractUrl,
   uploadProjectDocument,
+  uploadCv,
   registerFreelancer,
   registerClient,
   getActiveFreelancers,
