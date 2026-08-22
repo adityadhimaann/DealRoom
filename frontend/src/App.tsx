@@ -224,16 +224,34 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
   const [maxRate, setMaxRate] = useState<number>(15000);
   const [currency, setCurrency] = useState("$");
   const [jobText, setJobText] = useLocalStorageState("dr_fl_job", "");
-  const [userId, setUserId] = useState<string | null>(null);
+  const [userId, setUserId] = useLocalStorageState<string | null>("dr_fl_uid", null);
   const [projects, setProjects] = useState<any[]>([]);
   const [experience, setExperience] = useState<number>(0);
   const [education, setEducation] = useState<string>("");
-  const [isActive, setIsActive] = useState(false);
+  const [isActive, setIsActive] = useLocalStorageState<boolean>("dr_fl_active", false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [pendingInvite, setPendingInvite] = useState<DealInvite | null>(null);
   const [isAccepting, setIsAccepting] = useState(false);
   const isAcceptingRef = useRef(false);
   const wsRef = useRef<WebSocket | null>(null);
+
+  // Auto-connect WebSocket on mount if already active
+  useEffect(() => {
+    if (!isActive || !userId) return;
+    const ws = new WebSocket(`${WS_BASE}/lobby/${userId}`);
+    wsRef.current = ws;
+    ws.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        if (data.type === "invite_received") {
+          setPendingInvite(data.invite);
+        }
+      } catch {}
+    };
+    return () => {
+      ws.close();
+    };
+  }, [isActive, userId]);
 
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -502,13 +520,50 @@ function ClientLobby({ onDealAccepted, onBack }: {
   const [budgetMin, setBudgetMin] = useLocalStorageState<number>("dr_fl_bmin", 5000);
   const [budgetMax, setBudgetMax] = useLocalStorageState<number>("dr_fl_bmax", 15000);
   const [currency, setCurrency] = useState("$");
-  const [userId, setUserId] = useState<string | null>(null);
-  const [isRegistered, setIsRegistered] = useState(false);
+  const [userId, setUserId] = useLocalStorageState<string | null>("dr_cl_uid", null);
+  const [isRegistered, setIsRegistered] = useLocalStorageState<boolean>("dr_cl_registered", false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [freelancers, setFreelancers] = useState<FreelancerProfile[]>([]);
   const [inviteSent, setInviteSent] = useState<string | null>(null);
   const [waitingForAccept, setWaitingForAccept] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
+
+  // Auto-connect WebSocket and polling on mount if already registered
+  useEffect(() => {
+    if (!isRegistered || !userId) return;
+    
+    // Initial fetch
+    getActiveFreelancers(jobDescription).then(res => setFreelancers(res.freelancers || []));
+
+    const poll = setInterval(async () => {
+      try {
+        const res = await getActiveFreelancers(jobDescription);
+        setFreelancers(res.freelancers || []);
+      } catch {}
+    }, 2500);
+
+    const ws = new WebSocket(`${WS_BASE}/lobby/${userId}`);
+    wsRef.current = ws;
+    ws.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        if (data.type === "freelancer_list_update") {
+          setFreelancers(data.freelancers || []);
+        } else if (data.type === "invite_accepted") {
+          onDealAccepted(data.invite, userId);
+        } else if (data.type === "invite_declined") {
+          setInviteSent(null);
+          setWaitingForAccept(false);
+          alert("The freelancer declined your invite. You can try another one.");
+        }
+      } catch {}
+    };
+
+    return () => {
+      clearInterval(poll);
+      ws.close();
+    };
+  }, [isRegistered, userId, jobDescription]);
 
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -682,6 +737,7 @@ function ClientLobby({ onDealAccepted, onBack }: {
             <div style={{ padding: "10px", borderRadius: "10px", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)", textAlign: "center" }}>
               <span style={{ fontSize: "12px", fontWeight: 800, color: "#4ade80" }}>✓ JOB POSTED</span>
               <p style={{ fontSize: "11px", color: "#94a3b8", margin: "2px 0 0 0" }}>Browse and invite freelancers →</p>
+              <button onClick={() => setIsRegistered(false)} style={{ display: "block", margin: "6px auto 0 auto", background: "transparent", border: "none", color: "#94a3b8", fontSize: "11px", textDecoration: "underline", cursor: "pointer" }}>Edit Job Posting</button>
             </div>
           )}
         </div>

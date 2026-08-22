@@ -1,29 +1,51 @@
-"""In-memory Matchmaking Registry for real-time Freelancer ↔ Client lobby presence and deal invites."""
+"""Persistent Matchmaking Registry for real-time Freelancer ↔ Client lobby presence and deal invites."""
 import uuid
 import logging
 import asyncio
+import json
+import os
 from datetime import datetime
 from typing import Dict, Optional, List, Any
 from fastapi import WebSocket
 
 logger = logging.getLogger(__name__)
 
+DB_FILE = os.path.join(os.path.dirname(__file__), "..", "..", "matchmaking_db.json")
 
 class MatchmakingService:
-    """Lightweight in-memory matchmaking registry with WebSocket presence broadcasting."""
+    """File-persisted matchmaking registry with WebSocket presence broadcasting."""
 
     def __init__(self):
-        # Active profiles keyed by user_id
         self.freelancers: Dict[str, dict] = {}
         self.clients: Dict[str, dict] = {}
-
-        # Pending deal invites keyed by invite_id
         self.invites: Dict[str, dict] = {}
-
-        # WebSocket connections keyed by user_id for real-time push
         self.connections: Dict[str, WebSocket] = {}
 
-        logger.info("MatchmakingService initialized — real-time lobby ready")
+        self._load_from_disk()
+        logger.info("MatchmakingService initialized — persistent lobby ready")
+
+    def _load_from_disk(self):
+        if os.path.exists(DB_FILE):
+            try:
+                with open(DB_FILE, "r") as f:
+                    data = json.load(f)
+                    self.freelancers = data.get("freelancers", {})
+                    self.clients = data.get("clients", {})
+                    self.invites = data.get("invites", {})
+                    logger.info(f"Loaded {len(self.freelancers)} freelancers, {len(self.clients)} clients from disk DB")
+            except Exception as e:
+                logger.error(f"Failed to load matchmaking DB from disk: {e}")
+
+    def _save_to_disk(self):
+        try:
+            with open(DB_FILE, "w") as f:
+                json.dump({
+                    "freelancers": self.freelancers,
+                    "clients": self.clients,
+                    "invites": self.invites
+                }, f, indent=2)
+        except Exception as e:
+            logger.error(f"Failed to save matchmaking DB to disk: {e}")
 
     # ── Registration ──────────────────────────────────────────
 
@@ -34,6 +56,7 @@ class MatchmakingService:
         profile["status"] = "active"
         profile["registered_at"] = datetime.utcnow().isoformat()
         self.freelancers[user_id] = profile
+        self._save_to_disk()
         logger.info(f"Freelancer registered: {user_id} — {profile.get('display_name', 'Unknown')}")
         return user_id
 
@@ -44,6 +67,7 @@ class MatchmakingService:
         profile["status"] = "active"
         profile["registered_at"] = datetime.utcnow().isoformat()
         self.clients[user_id] = profile
+        self._save_to_disk()
         logger.info(f"Client registered: {user_id} — {profile.get('display_name', 'Unknown')}")
         return user_id
 
@@ -72,12 +96,11 @@ class MatchmakingService:
             if skills:
                 score += (len(matched_skills) / len(skills)) * 50
                 
-            # 2. Project overlap (very simple keyword match for now to be fast)
+            # 2. Project overlap
             projects = f.get("projects", [])
             for p in projects:
                 if isinstance(p, dict):
                     desc = p.get("description", "").lower()
-                    # Check if any significant word from job is in project description
                     job_words = set(w for w in job_lower.split() if len(w) > 4)
                     desc_words = set(w for w in desc.split() if len(w) > 4)
                     overlap = job_words.intersection(desc_words)
@@ -114,8 +137,8 @@ class MatchmakingService:
             logger.warning(f"Invite failed: client={client_id} or freelancer={freelancer_id} not found")
             return None
 
-        if freelancer.get("status") != "active":
-            logger.warning(f"Invite failed: freelancer {freelancer_id} is not active (status={freelancer.get('status')})")
+        if freelancer.get("status") == "in_deal":
+            logger.warning(f"Invite failed: freelancer {freelancer_id} is in_deal")
             return None
 
         invite_id = f"inv_{uuid.uuid4().hex[:8]}"
@@ -133,6 +156,7 @@ class MatchmakingService:
             "created_at": datetime.utcnow().isoformat(),
         }
         self.invites[invite_id] = invite
+        self._save_to_disk()
         logger.info(f"Deal invite created: {invite_id} | {client.get('display_name')} → {freelancer.get('display_name')}")
         return invite
 
@@ -144,7 +168,6 @@ class MatchmakingService:
 
         invite["status"] = "accepted"
 
-        # Mark both parties as in_deal
         fl = self.freelancers.get(invite["freelancer_id"])
         cl = self.clients.get(invite["client_id"])
         if fl:
@@ -152,6 +175,7 @@ class MatchmakingService:
         if cl:
             cl["status"] = "in_deal"
 
+        self._save_to_disk()
         logger.info(f"Deal invite ACCEPTED: {invite_id}")
         return invite
 
@@ -162,6 +186,7 @@ class MatchmakingService:
             return None
 
         invite["status"] = "declined"
+        self._save_to_disk()
         logger.info(f"Deal invite DECLINED: {invite_id}")
         return invite
 
@@ -218,6 +243,7 @@ class MatchmakingService:
         self.disconnect_user(user_id)
         self.freelancers.pop(user_id, None)
         self.clients.pop(user_id, None)
+        self._save_to_disk()
 
 
 # Singleton instance
