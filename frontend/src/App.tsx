@@ -340,23 +340,7 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
     onBack();
   };
 
-  const handleCreateNewProfile = () => {
-    localStorage.removeItem("dr_fl_name");
-    localStorage.removeItem("dr_fl_role");
-    localStorage.removeItem("dr_fl_skills");
-    localStorage.removeItem("dr_fl_job");
-    localStorage.removeItem("dr_fl_uid");
-    localStorage.removeItem("dr_fl_active");
-    setDisplayName("");
-    setRoleTitle("");
-    setSkillsText("");
-    setJobText("");
-    setMinRate(5000);
-    setMaxRate(15000);
-    setUserId(null);
-    setIsActive(false);
-    setPendingInvite(null);
-  };
+
   const [displayName, setDisplayName] = useLocalStorageState("dr_fl_name", "");
   const [roleTitle, setRoleTitle] = useLocalStorageState("dr_fl_role", "");
   const [skillsText, setSkillsText] = useLocalStorageState("dr_fl_skills", "");
@@ -374,6 +358,24 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
   const [isAccepting, setIsAccepting] = useState(false);
   const isAcceptingRef = useRef(false);
   const wsRef = useRef<WebSocket | null>(null);
+
+  const handleCreateNewProfile = () => {
+    localStorage.removeItem("dr_fl_name");
+    localStorage.removeItem("dr_fl_role");
+    localStorage.removeItem("dr_fl_skills");
+    localStorage.removeItem("dr_fl_job");
+    localStorage.removeItem("dr_fl_uid");
+    localStorage.removeItem("dr_fl_active");
+    setDisplayName("");
+    setRoleTitle("");
+    setSkillsText("");
+    setJobText("");
+    setMinRate(5000);
+    setMaxRate(15000);
+    setUserId(null);
+    setIsActive(false);
+    setPendingInvite(null);
+  };
 
   // Auto-connect WebSocket on mount if already active
   useEffect(() => {
@@ -676,23 +678,6 @@ function ClientLobby({ onDealAccepted, onBack }: {
     setAcceptedInviteForCall(null);
   };
 
-  const handleCreateNewProfile = () => {
-    localStorage.removeItem("dr_fl_name");
-    localStorage.removeItem("dr_fl_role");
-    localStorage.removeItem("dr_fl_skills");
-    localStorage.removeItem("dr_fl_job");
-    localStorage.removeItem("dr_fl_uid");
-    localStorage.removeItem("dr_fl_active");
-    setDisplayName("");
-    setRoleTitle("");
-    setSkillsText("");
-    setJobText("");
-    setMinRate(5000);
-    setMaxRate(15000);
-    setUserId(null);
-    setIsActive(false);
-    setPendingInvite(null);
-  };
   const [displayName, setDisplayName] = useLocalStorageState("dr_cl_name", "");
   const [company, setCompany] = useLocalStorageState("dr_cl_comp", "");
   const [industry, setIndustry] = useLocalStorageState("dr_cl_industry", "AI & Software");
@@ -1054,9 +1039,9 @@ function ClientLobby({ onDealAccepted, onBack }: {
 // 4. LIVE NEGOTIATION ARENA (preserved from existing code)
 // ═══════════════════════════════════════════════════════════════
 function NegotiationArena({
-  sessionId, setup, docName, onReset
+  sessionId, setup, onReset, myUserId
 }: {
-  sessionId: string; setup: NegotiationSetup; docName?: string; onReset: () => void;
+  sessionId: string; setup: NegotiationSetup; docName?: string; onReset: () => void; myUserId?: string | null;
 }) {
   const currency = setup.currency || "$";
   const [turns, setTurns] = useState<TurnWithAudio[]>([]);
@@ -1489,7 +1474,7 @@ export default function App() {
   }
 
   if (screen === "arena" && sessionId && setup) {
-    return <NegotiationArena sessionId={sessionId} setup={setup} onReset={handleReset} />;
+    return <NegotiationArena sessionId={sessionId} setup={setup} onReset={handleReset} myUserId={myUserId} />;
   }
 
   return <RoleSelectScreen onSelectRole={handleRoleSelect} />;

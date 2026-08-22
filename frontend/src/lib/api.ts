@@ -1,7 +1,16 @@
 /** API client for DealRoom backend. */
 
-const API_BASE = "http://localhost:10000/api";
-export const WS_BASE = "ws://localhost:10000/ws";
+// Dynamic Production & Local Environment Config
+const rawApi = import.meta.env.VITE_API_BASE || "";
+const rawWs = import.meta.env.VITE_WS_BASE || "";
+
+const API_BASE = rawApi || (typeof window !== "undefined" && window.location.hostname !== "localhost" 
+  ? `https://${window.location.hostname}/api` 
+  : "http://localhost:10000/api");
+
+export const WS_BASE = rawWs || (typeof window !== "undefined" && window.location.hostname !== "localhost"
+  ? `wss://${window.location.hostname}/ws`
+  : "ws://localhost:10000/ws");
 
 export interface AgentConfig {
   role_name: string;
@@ -58,9 +67,9 @@ export interface JobAnalysisResult {
 // ── Matchmaking Lobby Types ──────────────────────────────────
 
 export interface CVProject {
-  name: str;
-  description: str;
-  year: str;
+  name: string;
+  description: string;
+  year: string;
 }
 
 export interface FreelancerProfile {
@@ -198,8 +207,9 @@ export async function registerClient(profile: {
   return res.json();
 }
 
-export async function getActiveFreelancers(): Promise<{ freelancers: FreelancerProfile[]; count: number }> {
-  const res = await fetch(`${API_BASE}/lobby/freelancers`);
+export async function getActiveFreelancers(jobDescription?: string): Promise<{ freelancers: FreelancerProfile[]; count: number }> {
+  const url = jobDescription ? `${API_BASE}/lobby/freelancers?job_description=${encodeURIComponent(jobDescription)}` : `${API_BASE}/lobby/freelancers`;
+  const res = await fetch(url);
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
