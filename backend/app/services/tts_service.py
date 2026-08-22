@@ -23,7 +23,7 @@ class TTSService:
         self.voices = {"A": agent_a_voice, "B": agent_b_voice}
         self.edge_voices = {"A": edge_voice_a, "B": edge_voice_b}
         self.base_url = "https://api.elevenlabs.io/v1/text-to-speech"
-        self.elevenlabs_quota_exhausted = True
+        self.elevenlabs_quota_exhausted = False
         self._audio_cache = {}  # In-memory fast audio cache for 0ms returns
         self._http_client = httpx.AsyncClient(
             limits=httpx.Limits(max_keepalive_connections=20, max_connections=50),

@@ -28,7 +28,7 @@ class RegisterFreelancerRequest(BaseModel):
     job_text: str = ""
     avatar_color: str = "#c084fc"
     projects: list[dict] = []
-    years_of_experience: int = 0
+    years_of_experience: float = 0.0
     education: str = ""
 
 

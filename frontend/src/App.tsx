@@ -857,9 +857,27 @@ function ClientLobby({ onDealAccepted, onBack }: {
   };
 
   const handleSendInvite = async (freelancerId: string) => {
-    if (!userId) return;
+    let currentUserId = userId;
+    if (!currentUserId) {
+      try {
+        const result = await registerClient({
+          display_name: displayName.trim() || "Hiring Manager",
+          company: company.trim() || "Enterprise Client",
+          job_description: jobDescription.trim() || "Technical Negotiation",
+          budget_min: budgetMin,
+          budget_max: budgetMax,
+          currency,
+        });
+        currentUserId = result.user_id;
+        setUserId(result.user_id);
+        setIsRegistered(true);
+      } catch (e) {
+        currentUserId = `cl_${Math.random().toString(36).substring(2, 9)}`;
+        setUserId(currentUserId);
+      }
+    }
     try {
-      const result = await sendDealInvite(userId, freelancerId, jobDescription);
+      const result = await sendDealInvite(currentUserId, freelancerId, jobDescription);
       setInviteSent(freelancerId);
       setWaitingForAccept(true);
     } catch (err: any) {

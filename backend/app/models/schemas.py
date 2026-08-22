@@ -120,7 +120,7 @@ class FreelancerProfile(BaseModel):
     
     # CV Intelligence fields
     projects: List[CVProject] = Field(default_factory=list)
-    years_of_experience: int = Field(default=0)
+    years_of_experience: float = Field(default=0.0)
     education: str = Field(default="")
     match_score: Optional[float] = Field(default=None, description="Match score for client lobby")
 

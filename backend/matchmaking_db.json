@@ -107,6 +107,69 @@
       "status": "in_deal",
       "registered_at": "2026-08-22T06:25:54.624869",
       "match_score": null
+    },
+    "fl_bbc96834": {
+      "display_name": "Aditya Kumar",
+      "role_title": "Lead AI & Machine Learning Engineer",
+      "skills": [
+        "React",
+        "TypeScript",
+        "JavaScript",
+        "Next.js",
+        "Node.js",
+        "PostgreSQL",
+        "MongoDB",
+        "Docker",
+        "AWS",
+        "OpenAI",
+        "CI/CD",
+        "Git"
+      ],
+      "min_rate": 6000.0,
+      "max_rate": 18000.0,
+      "currency": "$",
+      "job_text": "Aditya Kumar is an accomplished Lead AI & Machine Learning Engineer with over 5+ years of verified industry experience in B.S. in Computer Science & Engineering.\n\nCore Competencies:\nReact, TypeScript, JavaScript, Next.js, Node.js, PostgreSQL, MongoDB, Docker\n\nProven track record delivering scalable production architectures, low-latency microservices, and end-to-end milestone execution.",
+      "avatar_color": "#c084fc",
+      "projects": [],
+      "years_of_experience": 5,
+      "education": "B.S. in Computer Science & Engineering",
+      "user_id": "fl_bbc96834",
+      "status": "in_deal",
+      "registered_at": "2026-08-22T07:10:32.407513",
+      "match_score": 15.0
+    },
+    "fl_dfd88a70": {
+      "display_name": "Aditya Kumar",
+      "role_title": "Full\u2011Stack Engineer & Generative AI Solutions Specialist",
+      "skills": [
+        "Java",
+        "JavaScript",
+        "TypeScript",
+        "React.js",
+        "Next.js",
+        "Node.js",
+        "Express.js",
+        "MySQL",
+        "PostgreSQL",
+        "MongoDB",
+        "Docker",
+        "AWS",
+        "Generative AI",
+        "REST APIs",
+        "System Design"
+      ],
+      "min_rate": 6000.0,
+      "max_rate": 12000.0,
+      "currency": "$",
+      "job_text": "Aditya Kumar is a proactive full\u2011stack developer with hands\u2011on experience building scalable web and mobile applications for global clients. He has delivered multiple production\u2011grade solutions using React, Next.js, Node.js and cloud services (AWS, Vercel, Google Cloud), and integrated generative\u2011AI APIs (Claude, Gemini, OpenAI) to create intelligent dashboards and AI\u2011native CRM platforms. His internships at Larsen & Toubro and freelance work on Upwork demonstrate strong backend optimization (MySQL query tuning, 65% latency reduction) and reliable deployment practices (Docker, CI/CD, IIS/Hyper\u2011V). A solid foundation in data structures, algorithms, system design, and microservices complements his ability to lead architecture discussions and mentor peers. Recognized in top\u201115 of a 25k\u2011participant AI hackathon and selected for Smart India Hackathon, he combines technical depth with innovative problem\u2011solving, making him a valuable asset for high\u2011impact, AI\u2011driven product teams.",
+      "avatar_color": "#c084fc",
+      "projects": [],
+      "years_of_experience": 1,
+      "education": "Lovely Professional University \u2013 B.Tech Computer Science and Engineering (CGPA: 7.42)",
+      "user_id": "fl_dfd88a70",
+      "status": "in_deal",
+      "registered_at": "2026-08-22T07:44:55.369144",
+      "match_score": 15.0
     }
   },
   "clients": {
@@ -131,7 +194,7 @@
       "currency": "$",
       "avatar_color": "#38bdf8",
       "user_id": "cl_d067ef5e",
-      "status": "active",
+      "status": "in_deal",
       "registered_at": "2026-08-22T06:22:02.748302"
     },
     "cl_f7963f4c": {
@@ -157,6 +220,30 @@
       "user_id": "cl_8372ced2",
       "status": "in_deal",
       "registered_at": "2026-08-22T06:30:49.975295"
+    },
+    "cl_09b267c1": {
+      "display_name": "aditya",
+      "company": "abc",
+      "job_description": "Project: Debugging and Codebase Navigation\n\nDeliverables:\nRESTful API & Supabase Integration\n- Vercel CI/CD Deployment Pipeline\n- Root-Cause Analyses & Rapid Bug Fixes\n- Dedicated 30+ Hrs/Week Time Logs",
+      "budget_min": 3897.0,
+      "budget_max": 15588.0,
+      "currency": "$",
+      "avatar_color": "#38bdf8",
+      "user_id": "cl_09b267c1",
+      "status": "active",
+      "registered_at": "2026-08-22T07:53:23.121395"
+    },
+    "cl_0734371a": {
+      "display_name": "abc",
+      "company": "abc",
+      "job_description": "Project: Debugging and Codebase Navigation\n\nDeliverables:\nRESTful API & Supabase Integration\n- Vercel CI/CD Deployment Pipeline\n- Root-Cause Analyses & Rapid Bug Fixes\n- Dedicated 30+ Hrs/Week Time Logs",
+      "budget_min": 3897.0,
+      "budget_max": 15588.0,
+      "currency": "$",
+      "avatar_color": "#38bdf8",
+      "user_id": "cl_0734371a",
+      "status": "active",
+      "registered_at": "2026-08-22T07:53:49.687475"
     }
   },
   "invites": {
@@ -250,6 +337,32 @@
       "currency": "$",
       "status": "accepted",
       "created_at": "2026-08-22T06:30:51.207931"
+    },
+    "inv_966b02e8": {
+      "invite_id": "inv_966b02e8",
+      "client_id": "cl_d067ef5e",
+      "freelancer_id": "fl_bbc96834",
+      "client_name": "Sarah Miller (VP of Engineering)",
+      "client_company": "Nexus Financial AI",
+      "job_description": "We need a Senior Architect to build a real-time multi-agent negotiation platform with WebSockets and LlamaIndex RAG.",
+      "budget_min": 7500.0,
+      "budget_max": 19000.0,
+      "currency": "$",
+      "status": "accepted",
+      "created_at": "2026-08-22T07:12:12.662688"
+    },
+    "inv_3ac056a5": {
+      "invite_id": "inv_3ac056a5",
+      "client_id": "cl_d067ef5e",
+      "freelancer_id": "fl_dfd88a70",
+      "client_name": "Sarah Miller (VP of Engineering)",
+      "client_company": "Nexus Financial AI",
+      "job_description": "We need a Senior Architect to build a real-time multi-agent negotiation platform with WebSockets and LlamaIndex RAG.",
+      "budget_min": 7500.0,
+      "budget_max": 19000.0,
+      "currency": "$",
+      "status": "accepted",
+      "created_at": "2026-08-22T07:46:43.731460"
     }
   }
 }
