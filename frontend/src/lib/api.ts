@@ -245,3 +245,9 @@ export async function getClientProfile(userId: string): Promise<any> {
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
+
+export async function getActiveClients(): Promise<{ clients: any[]; count: number }> {
+  const res = await fetch(`${API_BASE}/lobby/clients`);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}

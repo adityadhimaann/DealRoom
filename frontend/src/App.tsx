@@ -32,6 +32,7 @@ import {
   registerFreelancer,
   registerClient,
   getActiveFreelancers,
+  getActiveClients,
   getFreelancerProfile,
   getClientProfile,
   sendDealInvite,
@@ -132,8 +133,9 @@ function RoleSelectScreen({ onSelectRole }: { onSelectRole: (role: "freelancer" 
     uid: getStorageItem("dr_cl_uid") || ""
   });
 
-  // Sync with backend on mount
+  // Sync with backend on mount for both Freelancers and Clients
   useEffect(() => {
+    // 1. Sync Freelancers
     getActiveFreelancers().then(res => {
       const list = res.freelancers || [];
       if (flState.uid) {
@@ -145,13 +147,35 @@ function RoleSelectScreen({ onSelectRole }: { onSelectRole: (role: "freelancer" 
           localStorage.setItem("dr_fl_active", JSON.stringify(true));
         }
       } else if (list.length > 0) {
-        // Recover latest registered freelancer if local was cleared
         const latest = list[list.length - 1];
         setFlState({ name: latest.display_name, role: latest.role_title, active: true, uid: latest.user_id });
         localStorage.setItem("dr_fl_name", JSON.stringify(latest.display_name));
         localStorage.setItem("dr_fl_role", JSON.stringify(latest.role_title));
         localStorage.setItem("dr_fl_active", JSON.stringify(true));
         localStorage.setItem("dr_fl_uid", JSON.stringify(latest.user_id));
+      }
+    }).catch(() => {});
+
+    // 2. Sync Clients
+    getActiveClients().then(res => {
+      const list = res.clients || [];
+      if (clState.uid) {
+        const found = list.find(c => c.user_id === clState.uid);
+        if (found) {
+          setClState({ name: found.display_name, company: found.company, registered: true, uid: found.user_id });
+          localStorage.setItem("dr_cl_name", JSON.stringify(found.display_name));
+          localStorage.setItem("dr_cl_comp", JSON.stringify(found.company));
+          localStorage.setItem("dr_cl_desc", JSON.stringify(found.job_description || ""));
+          localStorage.setItem("dr_cl_registered", JSON.stringify(true));
+        }
+      } else if (list.length > 0) {
+        const latest = list[list.length - 1];
+        setClState({ name: latest.display_name, company: latest.company, registered: true, uid: latest.user_id });
+        localStorage.setItem("dr_cl_name", JSON.stringify(latest.display_name));
+        localStorage.setItem("dr_cl_comp", JSON.stringify(latest.company));
+        localStorage.setItem("dr_cl_desc", JSON.stringify(latest.job_description || ""));
+        localStorage.setItem("dr_cl_registered", JSON.stringify(true));
+        localStorage.setItem("dr_cl_uid", JSON.stringify(latest.user_id));
       }
     }).catch(() => {});
   }, []);
