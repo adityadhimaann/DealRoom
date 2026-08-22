@@ -15,14 +15,15 @@ from app.services.agent_service import AgentService
 from app.services.tts_service import TTSService
 from app.services.negotiation_orchestrator import NegotiationOrchestrator
 from app.routers import negotiation
+from app.routers import lobby
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="DealRoom API",
-    description="Two AI Agents Negotiating by Voice in Real-Time on Behalf of Two Humans",
-    version="2.0.0",
+    description="Real-Time Freelancer ↔ Client Matchmaking & AI-Powered Voice Negotiation Platform",
+    version="3.0.0",
 )
 
 app.add_middleware(
@@ -56,6 +57,8 @@ orchestrator = NegotiationOrchestrator(agent_service, tts_service)
 negotiation.set_orchestrator(orchestrator)
 app.include_router(negotiation.router)
 app.include_router(negotiation.ws_router)
+app.include_router(lobby.router)
+app.include_router(lobby.ws_router)
 
 
 @app.get("/health")

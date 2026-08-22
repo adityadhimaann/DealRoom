@@ -96,3 +96,53 @@ class JobAnalysisResponse(BaseModel):
     deliverables: List[str] = Field(default_factory=list)
     leverage_points: List[str]
     scope_risks: List[str]
+
+
+# ── Matchmaking & Lobby Models ────────────────────────────────────
+
+class FreelancerProfile(BaseModel):
+    """Active freelancer profile in the matchmaking registry."""
+    user_id: str = ""
+    display_name: str = Field(..., description="Freelancer's visible name")
+    role_title: str = Field(default="Full-Stack Developer", description="e.g. 'Senior React Architect'")
+    skills: List[str] = Field(default_factory=list, description="e.g. ['React', 'Node.js', 'AWS']")
+    min_rate: float = Field(default=5000, description="Minimum acceptable project rate")
+    max_rate: float = Field(default=15000, description="Ideal asking rate")
+    currency: str = "$"
+    job_text: str = Field(default="", description="Pasted SOW / job description / portfolio summary")
+    avatar_color: str = Field(default="#c084fc", description="Avatar accent color hex")
+    status: str = Field(default="active", description="active | in_deal | offline")
+
+
+class ClientProfile(BaseModel):
+    """Active client profile in the matchmaking registry."""
+    user_id: str = ""
+    display_name: str = Field(..., description="Client's visible name")
+    company: str = Field(default="", description="Company or organization name")
+    job_description: str = Field(default="", description="Pasted RFP / job posting / requirements")
+    budget_min: float = Field(default=3000, description="Minimum budget")
+    budget_max: float = Field(default=10000, description="Maximum budget ceiling")
+    currency: str = "$"
+    avatar_color: str = Field(default="#38bdf8", description="Avatar accent color hex")
+    status: str = Field(default="active", description="active | in_deal | offline")
+
+
+class LobbyRegistration(BaseModel):
+    """Registration payload to join the matchmaking lobby."""
+    role: str = Field(..., description="'freelancer' or 'client'")
+    freelancer_profile: Optional[FreelancerProfile] = None
+    client_profile: Optional[ClientProfile] = None
+
+
+class DealInvite(BaseModel):
+    """An invitation from a client to a freelancer to enter the DealRoom."""
+    invite_id: str = ""
+    client_id: str
+    freelancer_id: str
+    client_name: str = ""
+    client_company: str = ""
+    job_description: str = ""
+    budget_min: float = 0
+    budget_max: float = 0
+    currency: str = "$"
+    status: str = Field(default="pending", description="pending | accepted | declined | expired")
