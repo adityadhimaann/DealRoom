@@ -1542,7 +1542,7 @@ export default function App() {
     // Build a NegotiationSetup from the invite data
     const dealSetup: NegotiationSetup = {
       subject: cleanTitle(invite.job_description.substring(0, 100)) || "Live DealRoom Negotiation",
-      max_turns: 8,
+      max_turns: 12,
       currency: invite.currency || "$",
       deliverables: ["Scope & Deliverables", "Timeline & Milestones", "Payment Terms", "Quality Assurance"],
       agent_a_config: {

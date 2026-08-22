@@ -25,7 +25,7 @@ class NegotiationSetup(BaseModel):
     agent_a_config: AgentConfig
     agent_b_config: AgentConfig
     subject: str = Field(..., description="What is being negotiated with technical scope")
-    max_turns: int = Field(default=8, ge=4, le=20)
+    max_turns: int = Field(default=10, ge=4, le=20)
     currency: str = Field(default="$", description="Currency symbol: '$', '₹', '€', '£'")
     deliverables: List[str] = Field(default_factory=list, description="Concrete technical deliverables")
 
