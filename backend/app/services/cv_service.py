@@ -76,7 +76,21 @@ Return ONLY a strictly valid JSON object matching this schema:
                 temperature=0.1
             )
             
-            data = json.loads(response.choices[0].message.content)
+            content = response.choices[0].message.content.strip()
+            # Clean possible markdown code fences
+            if content.startswith("```json"):
+                content = content[7:]
+            if content.startswith("```"):
+                content = content[3:]
+            if content.endswith("```"):
+                content = content[:-3]
+            content = content.strip()
+            
+            data = json.loads(content)
+            if isinstance(data, list) and len(data) > 0 and isinstance(data[0], dict):
+                data = data[0]
+            elif not isinstance(data, dict):
+                data = {}
             return data
         except Exception as e:
             logger.error(f"Groq CV extraction failed: {e}")

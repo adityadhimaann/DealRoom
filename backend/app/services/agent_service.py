@@ -433,7 +433,11 @@ Return strictly a JSON object with project_title, urgency_level, client_persona,
             logger.warning(f"Groq analysis error ({e}), running rule-based analysis...")
             return self._sanitize_job_analysis({}, source_hint or "Job Project", raw_text=job_text)
 
-    def _sanitize_job_analysis(self, d: dict, fallback_title: str, raw_text: str = "") -> dict:
+    def _sanitize_job_analysis(self, d: any, fallback_title: str, raw_text: str = "") -> dict:
+        if isinstance(d, list) and len(d) > 0 and isinstance(d[0], dict):
+            d = d[0]
+        elif not isinstance(d, dict):
+            d = {}
         currency = d.get("currency") or (self._detect_currency_from_text(raw_text) if raw_text else "$")
         if str(currency).upper() in ("INR", "RS", "RUPEES", "RUPEE"):
             currency = "₹"
