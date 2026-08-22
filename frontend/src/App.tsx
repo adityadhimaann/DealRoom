@@ -262,22 +262,17 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
     setIsUploading(true);
     try {
       const data = await uploadCv(file);
-      setRoleTitle(data.role_title || "");
-      if (data.skills) setSkillsText(data.skills.join(", "));
+      if (data.name) setDisplayName(data.name);
+      if (data.role_title) setRoleTitle(data.role_title);
+      if (data.skills) setSkillsText(Array.isArray(data.skills) ? data.skills.join(", ") : data.skills);
+      if (data.min_rate) setMinRate(data.min_rate);
+      if (data.max_rate) setMaxRate(data.max_rate);
+      if (data.summary) setJobText(data.summary);
       if (data.projects) setProjects(data.projects);
       if (data.years_of_experience) setExperience(data.years_of_experience);
       if (data.education) setEducation(data.education);
       
-      const updatedProfile = {
-        display_name: displayName,
-        role_title: data.role_title || "",
-        skillsText: data.skills?.join(", ") || "",
-        projects: data.projects || [],
-        years_of_experience: data.years_of_experience || 0,
-        education: data.education || ""
-      };
-      
-      alert("CV Extracted successfully! Hit 'Go Active' to join the pool with this intelligence.");
+      alert("CV Extracted successfully! All fields (Name, Role, Skills, Rates, and SOW Summary) have been populated.");
     } catch (err: any) {
       alert("Failed to parse CV: " + err.message);
     } finally {
