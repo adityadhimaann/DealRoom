@@ -80,10 +80,28 @@ function cleanTitle(title: string): string {
     .trim() || "Commercial Negotiation";
 }
 
-// ── Bulletproof Audio Player ───────────────────────────────
+// ── Bulletproof Anti-Overlap Audio Queue ───────────────────────
+let globalAudioInstance: HTMLAudioElement | null = null;
+
+function stopCurrentAudio() {
+  if (globalAudioInstance) {
+    try {
+      globalAudioInstance.pause();
+      globalAudioInstance.currentTime = 0;
+    } catch {}
+    globalAudioInstance = null;
+  }
+}
+
 function playBase64Audio(b64: string): Promise<void> {
   return new Promise((resolve) => {
-    if (!b64 || b64.length < 100) { resolve(); return; }
+    // Stop any existing audio immediately to prevent voice overlapping
+    stopCurrentAudio();
+
+    if (!b64 || b64.length < 100) {
+      resolve();
+      return;
+    }
     try {
       const binaryString = atob(b64);
       const bytes = new Uint8Array(binaryString.length);
@@ -91,10 +109,26 @@ function playBase64Audio(b64: string): Promise<void> {
       const blob = new Blob([bytes], { type: "audio/mpeg" });
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
-      audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
-      audio.onerror = () => { URL.revokeObjectURL(url); resolve(); };
-      audio.play().catch(() => resolve());
-    } catch { resolve(); }
+      globalAudioInstance = audio;
+
+      audio.onended = () => {
+        URL.revokeObjectURL(url);
+        globalAudioInstance = null;
+        resolve();
+      };
+      audio.onerror = () => {
+        URL.revokeObjectURL(url);
+        globalAudioInstance = null;
+        resolve();
+      };
+      audio.play().catch(() => {
+        globalAudioInstance = null;
+        resolve();
+      });
+    } catch {
+      globalAudioInstance = null;
+      resolve();
+    }
   });
 }
 
@@ -1170,11 +1204,11 @@ function NegotiationArena({
         }
       } catch {}
     };
-    return () => { ws.close(); };
+    return () => { stopCurrentAudio(); ws.close(); };
   }, [sessionId]);
 
   const handleStartAuto = () => { if (wsRef.current?.readyState === WebSocket.OPEN) { setIsAutoRunning(true); autoRunningRef.current = true; wsRef.current.send(JSON.stringify({ action: "step" })); } };
-  const handlePause = () => { setIsAutoRunning(false); autoRunningRef.current = false; };
+  const handlePause = () => { setIsAutoRunning(false); autoRunningRef.current = false; stopCurrentAudio(); };
   const handleStepTurn = () => { if (wsRef.current?.readyState === WebSocket.OPEN) wsRef.current.send(JSON.stringify({ action: "step" })); };
 
     const handleSendHumanMessage = () => {
