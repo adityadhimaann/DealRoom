@@ -153,10 +153,17 @@ body {
 }
 
 @media (max-width: 768px) {
-  body, #root, [style*="overflow: hidden"] {
+  body, #root {
     overflow-y: auto !important;
     height: auto !important;
     min-height: 100vh !important;
+  }
+  .app-root-container {
+    height: auto !important;
+    min-height: 100vh !important;
+    padding: 24px 16px !important;
+    gap: 20px !important;
+    overflow-y: auto !important;
   }
   .role-cards-container {
     flex-direction: column !important;

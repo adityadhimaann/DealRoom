@@ -244,7 +244,7 @@ function RoleSelectScreen({ onSelectRole }: { onSelectRole: (role: "freelancer" 
   const clUid = clState.uid;
 
   return (
-    <div style={{
+    <div className="app-root-container" style={{
       height: "100vh", width: "100vw", overflow: "hidden",
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
       background: "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(56,189,248,0.12), transparent 70%), radial-gradient(ellipse 60% 40% at 0% 100%, rgba(192,132,252,0.08), transparent 60%), radial-gradient(ellipse 60% 40% at 100% 100%, rgba(56,189,248,0.08), transparent 60%), #050508",
