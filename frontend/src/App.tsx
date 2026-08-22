@@ -343,7 +343,18 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
       <div style={{ flex: 1, display: "flex", gap: "20px", marginTop: "16px", overflow: "hidden" }}>
         {/* Profile Form */}
         <div style={{ width: "420px", display: "flex", flexDirection: "column", gap: "12px", background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "18px", overflowY: "auto" }}>
-          <span style={{ fontSize: "10.5px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.8px" }}>Your Freelancer Profile</span>
+          
+          {/* AI CV Upload */}
+          <div style={{ background: "linear-gradient(135deg, rgba(56,189,248,0.1), rgba(192,132,252,0.1))", border: "1px solid rgba(192,132,252,0.4)", borderRadius: "12px", padding: "16px", textAlign: "center", cursor: "pointer", transition: "0.2s" }} onClick={() => fileInputRef.current?.click()}>
+            <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".pdf" style={{ display: 'none' }} />
+            <DocIcon size={24} />
+            <h3 style={{ margin: "6px 0 3px 0", fontSize: "14px", color: "#c084fc" }}>AI CV Intelligence</h3>
+            <p style={{ margin: 0, fontSize: "11px", color: "rgba(255,255,255,0.7)" }}>
+              {isUploading ? "Extracting intelligence with Gemini 2.5 Flash..." : "Upload your PDF CV to auto-fill your profile."}
+            </p>
+          </div>
+
+          <span style={{ fontSize: "10.5px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.8px", marginTop: "8px" }}>Your Freelancer Profile</span>
           
           {[
             { label: "Display Name", value: displayName, set: setDisplayName, ph: "e.g. Aditya Dhiman" },
