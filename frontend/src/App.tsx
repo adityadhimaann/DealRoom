@@ -1454,7 +1454,7 @@ function NegotiationArena({
         </div>
 
         {/* Center: Controls + Radar + Transcript */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "14px", overflow: "hidden" }}>
+        <div className="arena-center-panel" style={{ display: "flex", flexDirection: "column", gap: "10px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "14px", overflow: "hidden" }}>
           {/* Human Voice Call Status Bar */}
           <div style={{ background: "linear-gradient(90deg, rgba(34,197,94,0.12), rgba(56,189,248,0.08), rgba(192,132,252,0.12))", border: "1px solid rgba(34,197,94,0.3)", borderRadius: "10px", padding: "8px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -1510,7 +1510,7 @@ function NegotiationArena({
               <div style={{ flexShrink: 0 }}><DealRadar setup={setup} turns={turns} currency={currency} /></div>
 
               {/* Transcript */}
-          <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", paddingRight: "6px", display: "flex", flexDirection: "column", gap: "8px" }}>
+          <div ref={scrollRef} className="arena-transcript-box" style={{ flex: 1, overflowY: "auto", paddingRight: "6px", display: "flex", flexDirection: "column", gap: "8px" }}>
             {turns.length === 0 && !isThinking && <div style={{ textAlign: "center", color: "#64748b", margin: "auto", padding: "20px 0" }}><p style={{ fontSize: "13px", fontWeight: 600, margin: "0 0 4px 0" }}>Click "Auto" to launch voice debate</p></div>}
             {turns.map((turn) => {
               const isA = turn.agent === "A";
