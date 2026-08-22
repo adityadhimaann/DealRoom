@@ -61,6 +61,22 @@ app.include_router(lobby.router)
 app.include_router(lobby.ws_router)
 
 
+
+@app.get("/")
+@app.get("/api")
+async def root_index():
+    return {
+        "status": "online",
+        "service": "DealRoom — Real-Time AI Negotiation Platform",
+        "version": "3.0.0",
+        "docs_url": "/docs",
+        "endpoints": {
+            "freelancers": "/api/lobby/freelancers",
+            "clients": "/api/lobby/clients",
+            "health": "/health"
+        }
+    }
+
 @app.get("/health")
 async def health():
     return {
