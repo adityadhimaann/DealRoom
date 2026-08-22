@@ -43,6 +43,27 @@ import {
   type DealInvite,
 } from "./lib/api";
 
+// ── Persistence Hook ──────────────────────────────────────────
+function useLocalStorageState<T>(key: string, defaultValue: T): [T, (val: T) => void] {
+  const [state, setState] = useState<T>(() => {
+    try {
+      const item = window.localStorage.getItem(key);
+      return item ? JSON.parse(item) : defaultValue;
+    } catch (e) {
+      return defaultValue;
+    }
+  });
+
+  const setValue = (val: T) => {
+    try {
+      setState(val);
+      window.localStorage.setItem(key, JSON.stringify(val));
+    } catch (e) {}
+  };
+  return [state, setValue];
+}
+
+
 function cleanTitle(title: string): string {
   if (!title) return "Commercial Negotiation";
   return title
