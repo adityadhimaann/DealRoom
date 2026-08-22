@@ -191,6 +191,10 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
   onDealAccepted: (invite: DealInvite, userId: string) => void;
   onBack: () => void;
 }) {
+  const handleBack = () => {
+    localStorage.removeItem("dealroom_screen");
+    onBack();
+  };
   const [displayName, setDisplayName] = useState("");
   const [roleTitle, setRoleTitle] = useState("");
   const [skillsText, setSkillsText] = useState("");
@@ -415,6 +419,10 @@ function ClientLobby({ onDealAccepted, onBack }: {
   onDealAccepted: (invite: DealInvite, userId: string) => void;
   onBack: () => void;
 }) {
+  const handleBack = () => {
+    localStorage.removeItem("dealroom_screen");
+    onBack();
+  };
   const [displayName, setDisplayName] = useState("");
   const [company, setCompany] = useState("");
   const [jobDescription, setJobDescription] = useState("");
