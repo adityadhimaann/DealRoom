@@ -290,7 +290,7 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
             <p style={{ fontSize: "11px", color: "#64748b", margin: "2px 0 0 0" }}>Set your profile, go active, and wait for client deal invites</p>
           </div>
         </div>
-        <button onClick={onBack} style={{ padding: "6px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "#cbd5e1", fontSize: "11.5px", fontWeight: 700, cursor: "pointer" }}>
+        <button onClick={handleBack} style={{ padding: "6px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "#cbd5e1", fontSize: "11.5px", fontWeight: 700, cursor: "pointer" }}>
           ← Back to Role Select
         </button>
       </div>
@@ -506,7 +506,7 @@ function ClientLobby({ onDealAccepted, onBack }: {
             <p style={{ fontSize: "11px", color: "#64748b", margin: "2px 0 0 0" }}>Post your job, browse freelancers, and send deal invites</p>
           </div>
         </div>
-        <button onClick={onBack} style={{ padding: "6px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "#cbd5e1", fontSize: "11.5px", fontWeight: 700, cursor: "pointer" }}>
+        <button onClick={handleBack} style={{ padding: "6px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "#cbd5e1", fontSize: "11.5px", fontWeight: 700, cursor: "pointer" }}>
           ← Back to Role Select
         </button>
       </div>
@@ -897,13 +897,17 @@ function NegotiationArena({
 // 5. MAIN APP ROUTER — 4-SCREEN FLOW
 // ═══════════════════════════════════════════════════════════════
 export default function App() {
-  const [screen, setScreen] = useState<"role_select" | "freelancer_lobby" | "client_lobby" | "arena">("role_select");
+  const [screen, setScreen] = useState<"role_select" | "freelancer_lobby" | "client_lobby" | "arena">(() => {
+    return (localStorage.getItem("dealroom_screen") as any) || "role_select";
+  });
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [setup, setSetup] = useState<NegotiationSetup | null>(null);
   const [myUserId, setMyUserId] = useState<string | null>(null);
 
   const handleRoleSelect = (role: "freelancer" | "client") => {
-    setScreen(role === "freelancer" ? "freelancer_lobby" : "client_lobby");
+    const nextScreen = role === "freelancer" ? "freelancer_lobby" : "client_lobby";
+    setScreen(nextScreen);
+    localStorage.setItem("dealroom_screen", nextScreen);
   };
 
   const handleDealAccepted = async (invite: DealInvite, userId: string) => {
@@ -942,19 +946,25 @@ export default function App() {
     }
   };
 
+  const handleBack = () => {
+    setScreen("role_select");
+    localStorage.removeItem("dealroom_screen");
+  };
+
   const handleReset = () => {
     setSessionId(null);
     setSetup(null);
     setMyUserId(null);
     setScreen("role_select");
+    localStorage.removeItem("dealroom_screen");
   };
 
   if (screen === "freelancer_lobby") {
-    return <FreelancerLobby onDealAccepted={handleDealAccepted} onBack={() => setScreen("role_select")} />;
+    return <FreelancerLobby onDealAccepted={handleDealAccepted} onBack={handleBack} />;
   }
 
   if (screen === "client_lobby") {
-    return <ClientLobby onDealAccepted={handleDealAccepted} onBack={() => setScreen("role_select")} />;
+    return <ClientLobby onDealAccepted={handleDealAccepted} onBack={handleBack} />;
   }
 
   if (screen === "arena" && sessionId && setup) {
