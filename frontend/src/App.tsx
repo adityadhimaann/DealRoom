@@ -489,8 +489,21 @@ function FreelancerLobby({ onDealAccepted, onBack }: {
   };
 
   useEffect(() => {
-    return () => { wsRef.current?.close(); };
-  }, []);
+    if (!isActive || !userId) return;
+    const ws = new WebSocket(`${WS_BASE}/lobby/${userId}`);
+    wsRef.current = ws;
+    ws.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        if (data.type === "invite_received") {
+          setPendingInvite(data.invite);
+        }
+      } catch {}
+    };
+    return () => {
+      ws.close();
+    };
+  }, [isActive, userId]);
 
   return (
     <div style={{
@@ -820,9 +833,44 @@ function ClientLobby({ onDealAccepted, onBack }: {
     }
   };
 
+  // Continuous Real-Time Freelancer Sync & WebSocket connection
   useEffect(() => {
-    return () => { wsRef.current?.close(); };
-  }, []);
+    const fetchFreelancers = async () => {
+      try {
+        const fl = await getActiveFreelancers(jobDescription);
+        setFreelancers(fl.freelancers || []);
+      } catch (e) {}
+    };
+
+    fetchFreelancers();
+    const interval = setInterval(fetchFreelancers, 1500);
+
+    let ws: WebSocket | null = null;
+    const socketId = userId || `anon_client_${Date.now()}`;
+    try {
+      ws = new WebSocket(`${WS_BASE}/lobby/${socketId}`);
+      wsRef.current = ws;
+      ws.onmessage = (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          if (data.type === "freelancer_list_update") {
+            setFreelancers(data.freelancers || []);
+          } else if (data.type === "invite_accepted") {
+            setAcceptedInviteForCall(data.invite);
+          } else if (data.type === "invite_declined") {
+            setInviteSent(null);
+            setWaitingForAccept(false);
+            alert("The freelancer declined your invite.");
+          }
+        } catch {}
+      };
+    } catch (e) {}
+
+    return () => {
+      clearInterval(interval);
+      ws?.close();
+    };
+  }, [userId, jobDescription]);
 
   return (
     <div style={{
@@ -927,12 +975,7 @@ function ClientLobby({ onDealAccepted, onBack }: {
           </div>
 
           <div style={{ flex: 1, overflowY: "auto", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "12px", alignContent: "start", paddingRight: "4px" }}>
-            {!isRegistered ? (
-              <div style={{ gridColumn: "1 / -1", textAlign: "center", color: "#64748b", padding: "40px 0" }}>
-                <span style={{ fontSize: "36px" }}>🏢</span>
-                <p style={{ fontSize: "14px", fontWeight: 700, margin: "8px 0" }}>Post your job to browse freelancers</p>
-              </div>
-            ) : freelancers.length === 0 ? (
+            {freelancers.length === 0 ? (
               <div style={{ gridColumn: "1 / -1", textAlign: "center", color: "#64748b", padding: "40px 0" }}>
                 <span style={{ fontSize: "36px" }}>📡</span>
                 <p style={{ fontSize: "14px", fontWeight: 700, margin: "8px 0" }}>No freelancers online yet</p>
